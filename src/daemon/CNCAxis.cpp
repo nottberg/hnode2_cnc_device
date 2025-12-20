@@ -1,0 +1,149 @@
+#include <unistd.h>
+#include <sys/eventfd.h>
+
+#include "CNCAxis.h"
+
+CNCAxis::CNCAxis()
+{
+
+}
+
+CNCAxis::~CNCAxis()
+{
+
+}
+
+void
+CNCAxis::setID( std::string value )
+{
+    m_id = value;
+}
+
+std::string
+CNCAxis::getID()
+{
+    return m_id;
+}
+
+CNCA_RESULT_T
+CNCAxis::addComponent( std::string compID, std::string function, CNCAxisComponent *component )
+{
+    printf("CNCAxis::addComponent - %s, %s, 0x%x\n", compID.c_str(), function.c_str(), component );
+
+    if( component == NULL )
+        return CNCA_RESULT_FAILURE;
+
+    component->setFunction( function );
+
+    std::map< std::string, CNCAxisComponent* >::iterator it = m_components.find( compID );
+
+    if( it != m_components.end() )
+    {
+        it->second = component;
+        return CNCA_RESULT_SUCCESS;
+    }
+
+    m_components.insert( std::pair< std::string, CNCAxisComponent* >( compID, component ) );
+
+    return CNCA_RESULT_SUCCESS;
+}
+
+CNCA_RESULT_T
+CNCAxis::removeComponent( std::string compID )
+{
+    std::map< std::string, CNCAxisComponent* >::iterator it = m_components.find( compID );
+
+    if( it == m_components.end() )
+        return CNCA_RESULT_FAILURE;
+
+    m_components.erase( it );
+
+    return CNCA_RESULT_SUCCESS;
+}
+
+CNCA_RESULT_T
+CNCAxis::getComponentByID( std::string compID, CNCAxisComponent **component )
+{
+    if( component == NULL )
+        return CNCA_RESULT_FAILURE;
+
+    std::map< std::string, CNCAxisComponent* >::iterator it = m_components.find( compID );
+
+    if( it != m_components.end() )
+    {
+        *component = it->second;
+        return CNCA_RESULT_SUCCESS;
+    }
+
+    *component = NULL;
+
+    return CNCA_RESULT_FAILURE;
+}
+
+//CNCM_RESULT_T
+//CNCAxis::getBusID( std::string &id )
+//{
+//    id = "cbus0";
+//    return CNCM_RESULT_SUCCESS;
+//}
+
+void
+CNCAxis::updateParameter( std::string name, std::string value )
+{
+    m_parameters.insert( std::pair<std::string, std::string>(name, value));
+}
+
+CNCA_RESULT_T
+CNCAxis::getParameter( std::string name, std::string &value )
+{
+    std::map< std::string, std::string >::iterator it = m_parameters.find( name );
+
+    if( it == m_parameters.end() )
+        return CNCA_RESULT_FAILURE;
+
+    value = it->second;
+    return CNCA_RESULT_SUCCESS;
+}
+
+CNCA_RESULT_T
+CNCAxis::registerWithEventLoop( CNCEventLoop *loop )
+{
+    printf( "CNCAxis::registerWithEventLoop - default\n" );
+
+    for( std::map< std::string, CNCAxisComponent* >::iterator it = m_components.begin(); it != m_components.end(); it++ )
+    {
+        it->second->registerWithEventLoop( loop );
+    }
+
+    return CNCA_RESULT_SUCCESS;
+}
+
+CNCA_RESULT_T
+CNCAxis::lookupCANDeviceByFunction( std::string deviceFunc, CANDevice **device )
+{
+    printf( "CNCAxis::lookupCANDeviceByFunction - func: %s\n", deviceFunc.c_str() );
+
+    for( std::map< std::string, CNCAxisComponent* >::iterator it = m_components.begin(); it != m_components.end(); it++ )
+    {
+        if( it->second->getFunction() == deviceFunc )
+        {
+            printf( "CNCAxis::lookupCANDeviceByFunction - match compID: %s\n", it->second->getID().c_str() );
+            // FIXME: Better type checking to make sure this is a CAN Device
+            *device = (CANDevice *) it->second;
+            return CNCA_RESULT_SUCCESS;
+        }   
+    }
+
+    return CNCA_RESULT_FAILURE;
+}
+
+void
+CNCAxis::debugPrint()
+{
+    printf( "  === Axis: %s ===\n", m_id.c_str() );
+
+    for( std::map< std::string, std::string >::iterator it = m_parameters.begin(); it != m_parameters.end(); it++ )
+    {
+        printf( "    %s: %s\n", it->first.c_str(), it->second.c_str() );
+    }
+}

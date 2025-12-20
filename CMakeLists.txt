@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED( VERSION 2.8 ) 
+CMAKE_MINIMUM_REQUIRED( VERSION 3.0 ) 
 PROJECT( hnode2-cnc-device ) 
 
 SET( MAJOR_VERSION 1 )
@@ -23,12 +23,24 @@ ADD_DEFINITIONS( -DVERSION=${VERSION} )
 SET( HNCNCD_SRC
      ${CMAKE_SOURCE_DIR}/src/daemon/hncncd.cpp
      ${CMAKE_SOURCE_DIR}/src/daemon/HNCNCDevice.cpp
+     ${CMAKE_SOURCE_DIR}/src/daemon/CNCEventLoop.cpp     
+     ${CMAKE_SOURCE_DIR}/src/daemon/CANRR.cpp
+     ${CMAKE_SOURCE_DIR}/src/daemon/CmdSequence.cpp
+     ${CMAKE_SOURCE_DIR}/src/daemon/CNCAxisComponent.cpp
+     ${CMAKE_SOURCE_DIR}/src/daemon/CNCAxis.cpp
+     ${CMAKE_SOURCE_DIR}/src/daemon/CNCMachine.cpp
+     ${CMAKE_SOURCE_DIR}/src/daemon/HNCNCDevice.cpp
+     ${CMAKE_SOURCE_DIR}/src/daemon/UIM342Cmd.cpp
+     ${CMAKE_SOURCE_DIR}/src/daemon/UIM342Machines.cpp
 )
 
 SET(CMAKE_BUILD_TYPE Debug)
 
 FIND_PACKAGE( Poco REQUIRED Util Foundation Net NetSSL JSON )
 FIND_PACKAGE( HNode2 REQUIRED )
+
+FIND_PACKAGE(PkgConfig REQUIRED)
+PKG_CHECK_MODULES(LIBMNL REQUIRED IMPORTED_TARGET libmnl)
 
 INCLUDE_DIRECTORIES( ${CMAKE_SOURCE_DIR}/src/include )
 
@@ -41,6 +53,7 @@ TARGET_LINK_LIBRARIES( hncncd PRIVATE
     ${Poco_JSON_LIBRARY}
 )
 TARGET_LINK_LIBRARIES( hncncd PRIVATE HNode2::common )
+TARGET_LINK_LIBRARIES( hncncd PRIVATE PkgConfig::LIBMNL )
 
 INSTALL( TARGETS hncncd DESTINATION ${CMAKE_INSTALL_PREFIX}/sbin COMPONENT daemon )
 
