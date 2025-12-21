@@ -99,7 +99,7 @@ HNCNCDevice::main( const std::vector<std::string>& args )
     // Setup the event loop
     m_eventLoop.init();
 
-    m_configUpdateTrigger = NULL;
+    m_configUpdateTrigger = m_eventLoop.createEventFD( this );
 
     //m_eventLoop.setupTriggerFD( m_configUpdateTrigger );
 
