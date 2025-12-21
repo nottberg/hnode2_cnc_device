@@ -24,7 +24,7 @@ typedef enum HNCNCDeviceResultEnum
   HNCNC_RESULT_SERVER_ERROR
 }HNCNC_RESULT_T;
 
-class HNCNCDevice : public Poco::Util::ServerApplication, public HNDEPDispatchInf, public HNDEventNotifyInf 
+class HNCNCDevice : public Poco::Util::ServerApplication, public HNDEPDispatchInf, public HNDEventNotifyInf, public CNCEventCB 
 {
     private:
         bool _helpRequested   = false;
@@ -36,7 +36,7 @@ class HNCNCDevice : public Poco::Util::ServerApplication, public HNDEPDispatchIn
 
         HNodeDevice m_hnodeDev;
 
-        HNEPTrigger m_configUpdateTrigger;
+        CNCEventFD *m_configUpdateTrigger;
 
         CNCEventLoop m_eventLoop;
 
@@ -64,6 +64,9 @@ class HNCNCDevice : public Poco::Util::ServerApplication, public HNDEPDispatchIn
     protected:
         // HNDevice REST callback
         virtual void dispatchEP( HNodeDevice *parent, HNOperationData *opData );
+
+        // Handle trigger events
+        virtual void eventFD( int fd );
 
         // Notification for hnode device config changes.
         virtual void hndnConfigChange( HNodeDevice *parent );

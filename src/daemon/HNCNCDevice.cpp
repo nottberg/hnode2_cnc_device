@@ -99,6 +99,8 @@ HNCNCDevice::main( const std::vector<std::string>& args )
     // Setup the event loop
     m_eventLoop.init();
 
+    m_configUpdateTrigger = NULL;
+
     //m_eventLoop.setupTriggerFD( m_configUpdateTrigger );
 
     // Register some format strings
@@ -285,6 +287,21 @@ HNCNCDevice::timeoutEvent()
 
 }
 
+*/
+void
+HNCNCDevice::eventFD( int sfd )
+{
+    std::cout << "HNManagementDevice::fdEvent() - entry: " << sfd << std::endl;
+
+    if( m_configUpdateTrigger && ( m_configUpdateTrigger->getFD() == sfd ) )
+    {
+        std::cout << "m_configUpdateTrigger - updating config" << std::endl;
+        m_configUpdateTrigger->clearEvent();
+        updateConfig();
+    }
+}
+
+/*
 void
 HNCNCDevice::fdEvent( int sfd )
 {
@@ -310,7 +327,8 @@ void
 HNCNCDevice::hndnConfigChange( HNodeDevice *parent )
 {
     std::cout << "HNManagementDevice::hndnConfigChange() - entry" << std::endl;
-    m_configUpdateTrigger.trigger();
+    if( m_configUpdateTrigger )
+      m_configUpdateTrigger->signalEvent();
 }
 
 void 
