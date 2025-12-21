@@ -34,12 +34,12 @@ class CNCEventFD
         
     private:
 
-        int        m_fd;
+        HNEPTrigger m_trigger;
         
         CNCEventCB *m_callback;
 };
 
-class CNCEventLoop
+class CNCEventLoop : public HNEPLoopCallbacks
 {
     public:
         CNCEventLoop();
@@ -56,12 +56,16 @@ class CNCEventLoop
         void signalQuit();
         void clearQuit();
         
+        virtual void loopIteration();
+        virtual void timeoutEvent();
+        virtual void fdEvent( int sfd );
+        virtual void fdError( int sfd ); 
+
     private:
 
-        HNEPLoop  m_evtLoop;
+        HNEPLoop  m_eventLoop;
 
-        //int m_epollFD;
-        //int m_quitFD;
+        HNEPTrigger m_quitTrigger; 
 
         std::map< int, CNCEventCB* > m_fdList;
 

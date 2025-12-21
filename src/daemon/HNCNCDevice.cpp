@@ -97,26 +97,26 @@ HNCNCDevice::main( const std::vector<std::string>& args )
     readConfig();
 
     // Setup the event loop
-    m_testDeviceEvLoop.setup( this );
+    m_eventLoop.init();
 
-    m_testDeviceEvLoop.setupTriggerFD( m_configUpdateTrigger );
+    //m_eventLoop.setupTriggerFD( m_configUpdateTrigger );
 
     // Register some format strings
-    m_hnodeDev.registerFormatString( "Error: %u", m_errStrCode );
-    m_hnodeDev.registerFormatString( "This is a test note.", m_noteStrCode );
+    //m_hnodeDev.registerFormatString( "Error: %u", m_errStrCode );
+    //m_hnodeDev.registerFormatString( "This is a test note.", m_noteStrCode );
 
     // Enable the health monitoring and add some fake components
-    m_hnodeDev.enableHealthMonitoring();
+    //m_hnodeDev.enableHealthMonitoring();
 
-    m_hnodeDev.getHealthRef().registerComponent( "test device hc1", HNDH_ROOT_COMPID, m_hc1ID );
-    std::cout << "Health Component 1 id: " << m_hc1ID << std::endl;
-    m_hnodeDev.getHealthRef().registerComponent( "test device hc2", HNDH_ROOT_COMPID, m_hc2ID );
-    std::cout << "Health Component 2 id: " << m_hc2ID << std::endl;
-    m_hnodeDev.getHealthRef().registerComponent( "test device hc2.1", m_hc2ID, m_hc3ID );
-    std::cout << "Health Component 3 id: " << m_hc3ID << std::endl;
+    //m_hnodeDev.getHealthRef().registerComponent( "test device hc1", HNDH_ROOT_COMPID, m_hc1ID );
+    //std::cout << "Health Component 1 id: " << m_hc1ID << std::endl;
+    //m_hnodeDev.getHealthRef().registerComponent( "test device hc2", HNDH_ROOT_COMPID, m_hc2ID );
+    //std::cout << "Health Component 2 id: " << m_hc2ID << std::endl;
+    //m_hnodeDev.getHealthRef().registerComponent( "test device hc2.1", m_hc2ID, m_hc3ID );
+    //std::cout << "Health Component 3 id: " << m_hc3ID << std::endl;
 
-    m_healthStateSeq = 0;
-    generateNewHealthState();
+    //m_healthStateSeq = 0;
+    //generateNewHealthState();
 
     // Start accepting device notifications
     m_hnodeDev.setNotifySink( this );
@@ -125,7 +125,7 @@ HNCNCDevice::main( const std::vector<std::string>& args )
     m_hnodeDev.start();
 
     // Start event processing loop
-    m_testDeviceEvLoop.run();
+    m_eventLoop.run();
 
     waitForTerminationRequest();
 
@@ -270,6 +270,7 @@ HNCNCDevice::updateConfig()
     return HNCNC_RESULT_SUCCESS;
 }
 
+/*
 void
 HNCNCDevice::loopIteration()
 {
@@ -303,6 +304,7 @@ HNCNCDevice::fdError( int sfd )
     std::cout << "HNManagementDevice::fdError() - entry: " << sfd << std::endl;
 
 }
+*/
 
 void
 HNCNCDevice::hndnConfigChange( HNodeDevice *parent )

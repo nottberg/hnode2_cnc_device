@@ -12,6 +12,8 @@
 #include <hnode2/HNEPLoop.h>
 #include <hnode2/HNReqWaitQueue.h>
 
+#include "CNCEventLoop.h"
+
 #define HNODE_TEST_DEVTYPE   "hnode2-test-device"
 
 typedef enum HNCNCDeviceResultEnum
@@ -22,7 +24,7 @@ typedef enum HNCNCDeviceResultEnum
   HNCNC_RESULT_SERVER_ERROR
 }HNCNC_RESULT_T;
 
-class HNCNCDevice : public Poco::Util::ServerApplication, public HNDEPDispatchInf, public HNDEventNotifyInf, public HNEPLoopCallbacks 
+class HNCNCDevice : public Poco::Util::ServerApplication, public HNDEPDispatchInf, public HNDEventNotifyInf 
 {
     private:
         bool _helpRequested   = false;
@@ -36,7 +38,7 @@ class HNCNCDevice : public Poco::Util::ServerApplication, public HNDEPDispatchIn
 
         HNEPTrigger m_configUpdateTrigger;
 
-        HNEPLoop m_testDeviceEvLoop;
+        CNCEventLoop m_eventLoop;
 
         // Format string codes
         uint m_errStrCode;
@@ -67,10 +69,10 @@ class HNCNCDevice : public Poco::Util::ServerApplication, public HNDEPDispatchIn
         virtual void hndnConfigChange( HNodeDevice *parent );
 
         // Event loop functions
-        virtual void loopIteration();
-        virtual void timeoutEvent();
-        virtual void fdEvent( int sfd );
-        virtual void fdError( int sfd );
+        //virtual void loopIteration();
+        //virtual void timeoutEvent();
+        //virtual void fdEvent( int sfd );
+        //virtual void fdError( int sfd );
 
         // Poco funcions
         void defineOptions( Poco::Util::OptionSet& options );

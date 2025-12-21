@@ -13,8 +13,6 @@
 
 CNCEventFD::CNCEventFD()
 {
-    m_fd = 0;
-
     m_callback = NULL;
 }
 
@@ -26,7 +24,7 @@ CNCEventFD::~CNCEventFD()
 int
 CNCEventFD::getFD()
 {
-    return m_fd;
+    return m_trigger.getFD();
 }
 
 CNCEVLP_RESULT_T
@@ -34,7 +32,8 @@ CNCEventFD::init( CNCEventCB *callback )
 {
     m_callback = callback;
 
-    m_fd = eventfd(0, EFD_SEMAPHORE);
+    if( m_trigger.setup() != HNEP_RESULT_SUCCESS )
+        return CNCEVLP_RESULT_FAILURE;
 
     return CNCEVLP_RESULT_SUCCESS;
 }
@@ -42,22 +41,20 @@ CNCEventFD::init( CNCEventCB *callback )
 void
 CNCEventFD::signalEvent()
 {
-    uint64_t u = 1;
-    write( m_fd, &u, sizeof(u) );
+    m_trigger.trigger();
 }
 
 void
 CNCEventFD::clearEvent()
 {
-    uint64_t u = 0;
-    read( m_fd, &u, sizeof(u) );
+    m_trigger.reset();
 }
 
 void
 CNCEventFD::makeCallback()
 {
     if( m_callback )
-        m_callback->eventFD( m_fd );
+        m_callback->eventFD( m_trigger.getFD() );
 }
 
 CNCEventLoop::CNCEventLoop()
@@ -71,37 +68,9 @@ CNCEventLoop::~CNCEventLoop()
 CNCEVLP_RESULT_T
 CNCEventLoop::init()
 {
-#if 0
-    // Create the epoll socket
-    m_epollFD = epoll_create1( 0 );
-    if( m_epollFD == -1 )
-    {
-        perror( "epoll_create1" );
-        return EVLP_RESULT_FAILURE;
-    }
+    m_quitTrigger.setup();
 
-    printf( "Created epoll fd: %d\n", m_epollFD );
-
-    // Create the exit loop signal socket
-    m_quitFD = eventfd( 0, EFD_SEMAPHORE );
-    if( m_quitFD == -1 )
-    {
-        perror( "m_quiteFD" );
-        return EVLP_RESULT_FAILURE;
-    }
-
-    printf( "Created quit fd: %d\n", m_quitFD );
-
-    struct epoll_event ev;
-
-    ev.events = EPOLLIN;
-    ev.data.fd = m_quitFD;
-    if( epoll_ctl( m_epollFD, EPOLL_CTL_ADD, m_quitFD, &ev ) == -1 )
-    {
-        perror( "epoll_ctl: CAN socket" );
-        return EVLP_RESULT_FAILURE;
-    }
-#endif
+    m_eventLoop.setup( this );
 
     return CNCEVLP_RESULT_SUCCESS;
 }
@@ -109,48 +78,22 @@ CNCEventLoop::init()
 CNCEVLP_RESULT_T
 CNCEventLoop::registerFD( int fd,  CNCEventCB *callback )
 {
-#if 0
-    struct epoll_event ev;
+    if( m_eventLoop.addFDToEPoll( fd ) != HNEP_RESULT_SUCCESS )
+        return CNCEVLP_RESULT_FAILURE;
 
-    printf( "Adding fd to epoll: %d\n", fd );
+    m_fdList.insert( std::pair< int, CNCEventCB* >( fd, callback ) );
 
-    ev.events = EPOLLIN;
-    ev.data.fd = fd;
-    if( epoll_ctl( m_epollFD, EPOLL_CTL_ADD, fd, &ev ) == -1 )
-    {
-        perror( "epoll_ctl: CAN socket" );
-        return EVLP_RESULT_FAILURE;
-    }
-
-    m_fdList.insert( std::pair< int, ELEventCB* >( fd, callback ) );
-#endif
     return CNCEVLP_RESULT_SUCCESS;
 }
 
 CNCEventFD*
 CNCEventLoop::createEventFD( CNCEventCB *callback )
 {
-//    struct epoll_event ev;
-    int fd = 0;
     CNCEventFD *newEvt = new CNCEventFD;
-#if 0
+
     newEvt->init( callback );
 
-    int fd = newEvt->getFD();
-
-    printf( "Adding event fd to epoll: %d\n", fd );
-
-    ev.events = EPOLLIN;
-    ev.data.fd = fd;
-
-    if( epoll_ctl( m_epollFD, EPOLL_CTL_ADD, fd, &ev ) == -1 )
-    {
-        perror( "epoll_ctl: CAN socket" );
-        delete newEvt;
-        return NULL;
-    }
-#endif
-    m_evtList.insert( std::pair< int, CNCEventFD* >( fd, newEvt ) );
+    m_evtList.insert( std::pair< int, CNCEventFD* >( newEvt->getFD(), newEvt ) );
 
     return newEvt;
 }
@@ -158,20 +101,65 @@ CNCEventLoop::createEventFD( CNCEventCB *callback )
 void
 CNCEventLoop::signalQuit()
 {
-    //uint64_t u = 1;
-    //write( m_quitFD, &u, sizeof(u) );
+    m_quitTrigger.trigger();
 }
 
 void
 CNCEventLoop::clearQuit()
 {
-    //uint64_t u = 1;
-    //read( m_quitFD, &u, sizeof(u) );
+    m_quitTrigger.reset();
+}
+
+void
+CNCEventLoop::loopIteration()
+{
+
+}
+
+void
+CNCEventLoop::timeoutEvent()
+{
+
+}
+
+void
+CNCEventLoop::fdEvent( int sfd )
+{
+    if( sfd == m_quitTrigger.getFD() )
+    {
+        clearQuit();
+        printf("EventLoop quit signal detected\n");
+        return;
+    }
+
+    std::map< int, CNCEventCB* >::iterator it = m_fdList.find( sfd );
+
+    if( it != m_fdList.end() )
+    {
+        it->second->eventFD( sfd );
+        return;
+    }
+
+    std::map< int, CNCEventFD* >::iterator et = m_evtList.find( sfd );
+
+    if( et != m_evtList.end() )
+    {
+        et->second->clearEvent();
+        et->second->makeCallback();
+    }
+}
+
+void
+CNCEventLoop::fdError( int sfd )
+{
+
 }
 
 CNCEVLP_RESULT_T
 CNCEventLoop::run()
 {
+    m_eventLoop.run();
+
 /*
     struct epoll_event events[MAX_EVENTS];
     uint nfds = 0;
