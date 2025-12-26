@@ -17,6 +17,7 @@
 
 #include <hnode2/HNodeDevice.h>
 
+#include "HNCNCAction.h"
 #include "HNCNCDevicePrivate.h"
 
 using namespace Poco::Util;
@@ -75,8 +76,12 @@ HNCNCDevice::main( const std::vector<std::string>& args )
     if( _instancePresent == true )
         m_instanceName = _instance;
 
-    m_hnodeDev.setDeviceType( HNODE_TEST_DEVTYPE );
+    m_hnodeDev.setDeviceType( HNODE_CNC_DEVTYPE );
     m_hnodeDev.setInstance( m_instanceName );
+
+    // Initialize the capture queue
+    m_curUserAction = NULL;
+    m_userActionQueue.init();
 
     HNDEndpoint hndEP;
 
@@ -125,6 +130,20 @@ HNCNCDevice::main( const std::vector<std::string>& args )
 
     // Start up the hnode device
     m_hnodeDev.start();
+
+    m_curMachine = new UIM342SingleAxisMachine;
+    
+    m_curMachine->setup();
+    m_curMachine->addEventObserver( this );
+    m_curMachine->prepareBeforeRun( &m_cmdParams );
+
+    // Hook the local action queue into the event loop
+    if( m_eventLoop.registerFD( m_userActionQueue.getEventFD(), this ) != CNCEVLP_RESULT_SUCCESS )
+    {
+        // Failed to add client socket.
+        std::cerr << "ERROR: Failed to add local capture queue to event loop." << std::endl;
+        return Application::EXIT_SOFTWARE;
+    }
 
     // Start event processing loop
     m_eventLoop.run();
@@ -203,7 +222,7 @@ HNCNCDevice::configExists()
 {
     HNodeConfigFile cfgFile;
 
-    return cfgFile.configExists( HNODE_TEST_DEVTYPE, m_instanceName );
+    return cfgFile.configExists( HNODE_CNC_DEVTYPE, m_instanceName );
 }
 
 HNCNC_RESULT_T
@@ -217,7 +236,7 @@ HNCNCDevice::initConfig()
     cfg.debugPrint(2);
     
     std::cout << "Saving config..." << std::endl;
-    if( cfgFile.saveConfig( HNODE_TEST_DEVTYPE, m_instanceName, cfg ) != HNC_RESULT_SUCCESS )
+    if( cfgFile.saveConfig( HNODE_CNC_DEVTYPE, m_instanceName, cfg ) != HNC_RESULT_SUCCESS )
     {
         std::cout << "ERROR: Could not save initial configuration." << std::endl;
         return HNCNC_RESULT_FAILURE;
@@ -237,7 +256,7 @@ HNCNCDevice::readConfig()
 
     std::cout << "Loading config..." << std::endl;
 
-    if( cfgFile.loadConfig( HNODE_TEST_DEVTYPE, m_instanceName, cfg ) != HNC_RESULT_SUCCESS )
+    if( cfgFile.loadConfig( HNODE_CNC_DEVTYPE, m_instanceName, cfg ) != HNC_RESULT_SUCCESS )
     {
         std::cout << "ERROR: Could not load saved configuration." << std::endl;
         return HNCNC_RESULT_FAILURE;
@@ -262,7 +281,7 @@ HNCNCDevice::updateConfig()
     cfg.debugPrint(2);
     
     std::cout << "Saving config..." << std::endl;
-    if( cfgFile.saveConfig( HNODE_TEST_DEVTYPE, m_instanceName, cfg ) != HNC_RESULT_SUCCESS )
+    if( cfgFile.saveConfig( HNODE_CNC_DEVTYPE, m_instanceName, cfg ) != HNC_RESULT_SUCCESS )
     {
         std::cout << "ERROR: Could not save configuration." << std::endl;
         return HNCNC_RESULT_FAILURE;
@@ -293,12 +312,22 @@ HNCNCDevice::eventFD( int sfd )
 {
     std::cout << "HNManagementDevice::fdEvent() - entry: " << sfd << std::endl;
 
-    if( m_configUpdateTrigger && ( m_configUpdateTrigger->getFD() == sfd ) )
+    if( m_configUpdateTrigger && m_configUpdateTrigger->isMatch( sfd ) )
     {
         std::cout << "m_configUpdateTrigger - updating config" << std::endl;
         m_configUpdateTrigger->clearEvent();
         updateConfig();
     }
+    else if( sfd == m_userActionQueue.getEventFD() )
+    {
+        // Verify that we can handle a new action,
+        // otherwise just spin.
+        std::cout << "Action Queue: " << std::endl; //<< getState() << std::endl;
+
+        // Start the new action
+        startAction();
+    }
+
 }
 
 /*
@@ -326,242 +355,233 @@ HNCNCDevice::fdError( int sfd )
 void
 HNCNCDevice::hndnConfigChange( HNodeDevice *parent )
 {
-    std::cout << "HNManagementDevice::hndnConfigChange() - entry" << std::endl;
+    std::cout << "HNCNCDevice::hndnConfigChange() - entry" << std::endl;
     if( m_configUpdateTrigger )
       m_configUpdateTrigger->signalEvent();
+}
+
+void
+HNCNCDevice::sequenceComplete()
+{
+    std::cout << "HNCNCDevice::sequenceComplete() - entry" << std::endl;
+
+}
+
+void
+HNCNCDevice::startAction()
+{
+    //HNSWDPacketClient packet;
+    HNID_ACTBIT_T  actBits = HNID_ACTBIT_CLEAR;
+
+    // Pop the action from the queue
+    m_curUserAction = ( HNCNCAction* ) m_userActionQueue.aquireRecord();
+
+    std::cout << "Action aquired - type: " << m_curUserAction->getType()  << "  thread: " << std::this_thread::get_id() << std::endl;
+
+    switch( m_curUserAction->getType() )
+    {
+#if 0
+        case HNCNC_ATYPE_GET_FILE_LIST:
+        {
+            // Return list of generated files
+            //m_curUserAction->setResponseJSON( m_storageMgr.getFileListJSON() );
+
+            // Done with this request
+            actBits = HNID_ACTBIT_COMPLETE;
+        }
+        break;
+
+        case HNCNC_ATYPE_GET_FILE_INFO:
+        {
+            // Return info about a specific file
+            //m_curUserAction->setResponseJSON( m_storageMgr.getFileJSON( m_curUserAction->getRequestFileID() ) );
+
+            // Done with this request
+            actBits = HNID_ACTBIT_COMPLETE;
+        }
+        break;
+
+        case HNCNC_ATYPE_DELETE_FILE:
+        {
+            // Delete a specific file
+            //m_storageMgr.deleteFile( m_curUserAction->getRequestFileID() );
+
+            // Done with this request
+            actBits = HNID_ACTBIT_COMPLETE;
+        }
+        break;        
+
+        case HNCNC_ATYPE_START_SINGLE_CAPTURE:
+        {
+            //m_imageMgr.createCaptures( 1, true );
+
+            // Return the newly created capture id
+            //m_curUserAction->setNewID( newOp->getID() );
+
+            // Done with this request
+            actBits = HNID_ACTBIT_COMPLETE;
+        }
+        break;
+
+        case HNCNC_ATYPE_GET_CAPTURE_LIST:
+        {
+            // Get the capture list json string
+            // from the image manager and 
+            // store it in the current action
+            // so it can be returned to the requestor
+            //m_curUserAction->setResponseJSON( m_imageMgr.getCaptureListJSON() );
+
+            // Done with this request
+            actBits = HNID_ACTBIT_COMPLETE;
+        }
+        break;
+
+        case HNCNC_ATYPE_GET_CAPTURE_INFO:
+        {
+            // Check if the provided capture id is valid,
+            // return error if not.
+
+            // Get the capture list json string
+            // from the image manager and 
+            // store it in the current action
+            // so it can be returned to the requestor
+            //m_curUserAction->setResponseJSON( m_imageMgr.getCaptureJSON( m_curUserAction->getRequestCaptureID() ) );
+
+            // Done with this request
+            actBits = HNID_ACTBIT_COMPLETE;
+        }
+        break;
+
+        case HNCNC_ATYPE_DELETE_CAPTURE:
+        {
+            // Tell the image manager to clean-up 
+            // capture and associated data.
+            //m_imageMgr.deleteCapture( m_curUserAction->getRequestCaptureID() );
+
+            // Done with this request
+            actBits = HNID_ACTBIT_COMPLETE;
+        }
+        break;
+#endif
+
+        case HNCNC_ATYPE_GET_STATUS:
+        break;
+
+        case HNCNC_ATYPE_GET_MACHINE_DESC:
+        break;
+
+        case HNCNC_ATYPE_GET_SEQ_DEF_LIST:
+        break;
+
+        case HNCNC_ATYPE_GET_SEQ_DEF_INFO:
+        break;
+
+        case HNCNC_ATYPE_ENQUEUE_SEQUENCE:
+        break;
+
+        case HNCNC_ATYPE_GET_ACTIVE_SEQUENCES:
+        break;
+
+        case HNCNC_ATYPE_GET_SEQUENCE_INFO:
+        break;
+
+        case HNCNC_ATYPE_CANCEL_SEQUENCE:
+        break;
+    }
+
+    // The configuration was changed so commit
+    // it to persistent copy
+    if( actBits & HNID_ACTBIT_UPDATE )
+    {
+        // Commit config update
+//        updateConfig();
+    }
+
+    // There was an error, complete with error
+    if( actBits & HNID_ACTBIT_ERROR )
+    {
+        std::cout << "Failing action: " << m_curUserAction->getType() << "  thread: " << std::this_thread::get_id() << std::endl;
+
+        // Signal failure
+        m_curUserAction->complete( false );
+        m_curUserAction = NULL;
+        return;
+    }
+
+    // Request has been completed successfully
+    if( actBits & HNID_ACTBIT_COMPLETE )
+    {
+        std::cout << "Completing action: " << m_curUserAction->getType() << "  thread: " << std::this_thread::get_id() << std::endl;
+
+        // Done with this request
+        m_curUserAction->complete( true );
+        m_curUserAction = NULL;
+    }
+    
 }
 
 void 
 HNCNCDevice::dispatchEP( HNodeDevice *parent, HNOperationData *opData )
 {
+    HNCNCAction action;
+
     std::cout << "HNCNCDevice::dispatchEP() - entry" << std::endl;
     std::cout << "  dispatchID: " << opData->getDispatchID() << std::endl;
     std::cout << "  opID: " << opData->getOpID() << std::endl;
     std::cout << "  thread: " << std::this_thread::get_id() << std::endl;
 
     std::string opID = opData->getOpID();
-          
-    // GET "/hnode2/test/status"
+
+    // GET "/hnode2/cnc/status"
     if( "getStatus" == opID )
     {
         std::cout << "=== Get Status Request ===" << std::endl;
     
-        // Set response content type
-        opData->responseSetChunkedTransferEncoding( true );
-        opData->responseSetContentType( "application/json" );
-
-        // Create a json status object
-        pjs::Object jsRoot;
-        jsRoot.set( "overallStatus", "OK" );
-
-        // Render response content
-        std::ostream& ostr = opData->responseSend();
-        try{ 
-            pjs::Stringifier::stringify( jsRoot, ostr, 1 ); 
-        } catch( ... ) {
-            std::cout << "ERROR: Exception while serializing comment" << std::endl;
-        }
-
-        // Request was successful
-        opData->responseSetStatusAndReason( HNR_HTTP_OK );
+        action.setType( HNCNC_ATYPE_GET_STATUS );
     }
-    // GET "/hnode2/test/widgets"
-    else if( "getWidgetList" == opID )
+    // GET "/hnode2/cnc/machine"
+    else if( "getMachineDesc" == opID )
     {
-        std::cout << "=== Get Widget List Request ===" << std::endl;
+        std::cout << "=== Get Machine Description ===" << std::endl;
 
-        // Set response content type
-        opData->responseSetChunkedTransferEncoding( true );
-        opData->responseSetContentType( "application/json" );
-
-        // Create a json root object
-        pjs::Array jsRoot;
-
-        pjs::Object w1Obj;
-        w1Obj.set( "id", "w1" );
-        w1Obj.set( "color", "red" );
-        jsRoot.add( w1Obj );
-
-        pjs::Object w2Obj;
-        w2Obj.set( "id", "w2" );
-        w2Obj.set( "color", "green" );
-        jsRoot.add( w2Obj );
-
-        pjs::Object w3Obj;
-        w3Obj.set( "id", "w3" );
-        w3Obj.set( "color", "blue" );
-        jsRoot.add( w3Obj );
-          
-        // Render response content
-        std::ostream& ostr = opData->responseSend();
-        try{ 
-            pjs::Stringifier::stringify( jsRoot, ostr, 1 ); 
-        } catch( ... ) {
-            std::cout << "ERROR: Exception while serializing comment" << std::endl;
-        }
-            
-        // Request was successful
-        opData->responseSetStatusAndReason( HNR_HTTP_OK );
+        action.setType( HNCNC_ATYPE_GET_MACHINE_DESC );
+    }   
+    // GET "/hnode2/cnc/sequencedef"
+    else if( "getSeqDefList" == opID )
+    {
+        action.setType( HNCNC_ATYPE_GET_SEQ_DEF_LIST );
+    }   
+    // GET "/hnode2/cnc/sequencedef/{seqid}"
+    else if( "getSeqDefInfo" == opID )
+    {
+        action.setType( HNCNC_ATYPE_GET_SEQ_DEF_INFO );
     }
-    // GET "/hnode2/test/widgets/{widgetid}"
-    else if( "getWidgetInfo" == opID )
+    // POST "/hnode2/cnc/sequencedef/{seqid}"
+    else if( "enqueueSequence" == opID )
     {
-        std::string widgetID;
-
-        if( opData->getParam( "widgetid", widgetID ) == true )
-        {
-            opData->responseSetStatusAndReason( HNR_HTTP_INTERNAL_SERVER_ERROR );
-            opData->responseSend();
-            return; 
-        }
-
-        std::cout << "=== Get Widget Info Request (id: " << widgetID << ") ===" << std::endl;
-
-        // Set response content type
-        opData->responseSetChunkedTransferEncoding( true );
-        opData->responseSetContentType( "application/json" );
-        
-        // Create a json root object
-        pjs::Array jsRoot;
-
-        pjs::Object w1Obj;
-        w1Obj.set( "id", widgetID );
-        w1Obj.set( "color", "black" );
-        jsRoot.add( w1Obj );
-          
-        // Render response content
-        std::ostream& ostr = opData->responseSend();
-        try{ 
-            pjs::Stringifier::stringify( jsRoot, ostr, 1 ); 
-        } catch( ... ) {
-            std::cout << "ERROR: Exception while serializing comment" << std::endl;
-        }            
-        // Request was successful
-        opData->responseSetStatusAndReason( HNR_HTTP_OK );
-
+        action.setType( HNCNC_ATYPE_ENQUEUE_SEQUENCE );
     }
-    // POST "/hnode2/test/widgets"
-    else if( "createWidget" == opID )
+    // GET "/hnode2/cnc/sequence"
+    else if( "getActiveSequences" == opID )
     {
-        std::istream& rs = opData->requestBody();
-        std::string body;
-        Poco::StreamCopier::copyToString( rs, body );
-        
-        std::cout << "=== Create Widget Post Data ===" << std::endl;
-        std::cout << body << std::endl;
-
-        // Object was created return info
-        opData->responseSetCreated( "w1" );
-        opData->responseSetStatusAndReason( HNR_HTTP_CREATED );
+        std::cout << "=== Get Active Sequences ===" << std::endl;
+    
+        action.setType( HNCNC_ATYPE_GET_ACTIVE_SEQUENCES );
+    }      
+    // GET "/hnode2/cnc/sequence/{seqid}"
+    else if( "getSequenceInfo" == opID )
+    {
+        action.setType( HNCNC_ATYPE_GET_SEQUENCE_INFO );
     }
-    // PUT "/hnode2/test/widgets/{widgetid}"
-    else if( "updateWidget" == opID )
+    // DELETE "/hnode2/cnc/sequence/{seqid}"
+    else if( "cancelSequence" == opID )
     {
-        std::string widgetID;
-
-        // Make sure zoneid was provided
-        if( opData->getParam( "widgetid", widgetID ) == true )
-        {
-            // widgetid parameter is required
-            opData->responseSetStatusAndReason( HNR_HTTP_BAD_REQUEST );
-            opData->responseSend();
-            return; 
-        }
-        
-        std::istream& rs = opData->requestBody();
-        std::string body;
-        Poco::StreamCopier::copyToString( rs, body );
-        
-        std::cout << "=== Update Widget Put Data (id: " << widgetID << ") ===" << std::endl;
-        std::cout << body << std::endl;
-
-        // Request was successful
-        opData->responseSetStatusAndReason( HNR_HTTP_OK );
-    }    
-    // DELETE "/hnode2/test/widgets/{widgetid}"
-    else if( "deleteWidget" == opID )
-    {
-        std::string widgetID;
-
-        // Make sure zoneid was provided
-        if( opData->getParam( "widgetid", widgetID ) == true )
-        {
-            // widgetid parameter is required
-            opData->responseSetStatusAndReason( HNR_HTTP_BAD_REQUEST );
-            opData->responseSend();
-            return; 
-        }
-
-        std::cout << "=== Delete Widget Request (id: " << widgetID << ") ===" << std::endl;
-
-        // Request was successful
-        opData->responseSetStatusAndReason( HNR_HTTP_OK );
+        action.setType( HNCNC_ATYPE_CANCEL_SEQUENCE );
     }
-    // PUT "/hnode2/test/health"
+    // PUT "/hnode2/cnc/health"
     else if( "putTestHealth" == opID )
     {
-        // Get access to payload
-        std::istream& rs = opData->requestBody();
-
-        // Parse the json body of the request
-        try
-        {
-            std::string component = HNDH_ROOT_COMPID;
-            std::string status = "OK";
-            uint errCode = 200;
-
-            // Attempt to parse the json
-            pjs::Parser parser;
-            pdy::Var varRoot = parser.parse( rs );
-
-            // Get a pointer to the root object
-            pjs::Object::Ptr jsRoot = varRoot.extract< pjs::Object::Ptr >();
-
-            if( jsRoot->has( "component" ) )
-                component = jsRoot->getValue<std::string>( "component" );
-
-            if( jsRoot->has( "status" ) )
-                status = jsRoot->getValue<std::string>( "status" );
-
-            if( jsRoot->has( "errCode" ) )
-                errCode = jsRoot->getValue<uint>( "errCode" );
-
-            m_hnodeDev.getHealthRef().startUpdateCycle( time(NULL) );
-
-            if( status == "OK" )
-            {
-                m_hnodeDev.getHealthRef().setComponentStatus( component, HNDH_CSTAT_OK );
-                m_hnodeDev.getHealthRef().clearComponentErrMsg( component );
-                m_hnodeDev.getHealthRef().clearComponentNote( component );
-            }
-            else if( status == "UNKNOWN" )
-            {
-                m_hnodeDev.getHealthRef().setComponentStatus( component, HNDH_CSTAT_UNKNOWN );
-                m_hnodeDev.getHealthRef().clearComponentErrMsg( component );
-            }
-            else if( status == "FAILED" )
-            {
-                m_hnodeDev.getHealthRef().setComponentStatus( component, HNDH_CSTAT_FAILED );
-                m_hnodeDev.getHealthRef().setComponentErrMsg( component, errCode, m_errStrCode, errCode );
-            }
-            else if( status == "NOTE" )
-            {
-                m_hnodeDev.getHealthRef().setComponentNote( component, m_noteStrCode );
-            }
-
-            m_hnodeDev.getHealthRef().completeUpdateCycle();
-
-        }
-        catch( Poco::Exception ex )
-        {
-            std::cout << "putTestHealth exception: " << ex.displayText() << std::endl;
-            opData->responseSetStatusAndReason( HNR_HTTP_INTERNAL_SERVER_ERROR );
-            opData->responseSend();
-            return;
-        }
-
-        // Request was successful
-        opData->responseSetStatusAndReason( HNR_HTTP_OK );
+        action.setType( HNCNC_ATYPE_GET_STATUS );
     }        
     else
     {
@@ -569,6 +589,63 @@ HNCNCDevice::dispatchEP( HNodeDevice *parent, HNOperationData *opData )
         opData->responseSetStatusAndReason( HNR_HTTP_NOT_IMPLEMENTED );
         opData->responseSend();
         return;
+    }
+
+    std::cout << "Start Action - client: " << action.getType() << "  thread: " << std::this_thread::get_id() << std::endl;
+
+    // Submit the action and block for response
+    m_userActionQueue.postAndWait( &action );
+
+    std::cout << "Finish Action - client" << "  thread: " << std::this_thread::get_id() << std::endl;
+
+    // Determine what happened
+    switch( action.getStatus() )
+    {
+        case HNRW_RESULT_SUCCESS:
+        {
+            std::string cType;
+            std::string objID;
+
+            // See if response content should be generated
+            if( action.hasRspContent( cType ) )
+            {
+                // Set response content type
+                opData->responseSetChunkedTransferEncoding( true );
+                opData->responseSetContentType( cType );
+
+                // Render any response content
+                std::ostream& ostr = opData->responseSend();
+            
+                if( action.generateRspContent( ostr ) == true )
+                {
+                    opData->responseSetStatusAndReason( HNR_HTTP_INTERNAL_SERVER_ERROR );
+                    opData->responseSend();
+                    return;
+                }
+            }
+
+            // Check if a new object was created.
+            if( action.hasNewObject( objID ) )
+            {
+                // Object was created return info
+                opData->responseSetCreated( objID );
+                opData->responseSetStatusAndReason( HNR_HTTP_CREATED );
+            }
+            else
+            {
+                // Request was successful
+                opData->responseSetStatusAndReason( HNR_HTTP_OK );
+            }
+        }
+        break;
+
+        case HNRW_RESULT_FAILURE:
+            opData->responseSetStatusAndReason( HNR_HTTP_INTERNAL_SERVER_ERROR );
+        break;
+
+        case HNRW_RESULT_TIMEOUT:
+            opData->responseSetStatusAndReason( HNR_HTTP_INTERNAL_SERVER_ERROR );
+        break;
     }
 
     // Return to caller
@@ -584,7 +661,7 @@ const std::string g_HNode2TestRest = R"(
     "title": ""
   },
   "paths": {
-      "/hnode2/test/status": {
+      "/hnode2/cnc/status": {
         "get": {
           "summary": "Get test device status.",
           "operationId": "getStatus",
@@ -606,30 +683,10 @@ const std::string g_HNode2TestRest = R"(
         }
       },
 
-      "/hnode2/test/widgets": {
+      "/hnode2/cnc/machine": {
         "get": {
           "summary": "Return made up widget list.",
-          "operationId": "getWidgetList",
-          "responses": {
-            "200": {
-              "description": "successful operation",
-              "content": {
-                "application/json": {
-                  "schema": {
-                    "type": "object"
-                  }
-                }
-              }
-            },
-            "400": {
-              "description": "Invalid status value"
-            }
-          }
-        },
-
-        "post": {
-          "summary": "Create a new widget - dummy.",
-          "operationId": "createWidget",
+          "operationId": "getMachineDesc",
           "responses": {
             "200": {
               "description": "successful operation",
@@ -648,10 +705,32 @@ const std::string g_HNode2TestRest = R"(
         }
       },
 
-      "/hnode2/test/widgets/{widgetid}": {
+      "/hnode2/cnc/sequencedef": {
         "get": {
-          "summary": "Get information about a specific widget - dummy.",
-          "operationId": "getWidgetInfo",
+          "summary": "Return a list of defined sequences",
+          "operationId": "getSeqDefList",
+          "responses": {
+            "200": {
+              "description": "successful operation",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid status value"
+            }
+          }
+        }
+      },
+
+      "/hnode2/cnc/sequencedef/{seqid}": {
+        "get": {
+          "summary": "Get information about a specific sequence definition.",
+          "operationId": "getSeqDefInfo",
           "responses": {
             "200": {
               "description": "successful operation",
@@ -668,9 +747,53 @@ const std::string g_HNode2TestRest = R"(
             }
           }
         },
-        "put": {
-          "summary": "Update a specific widget - dummy.",
-          "operationId": "updateWidget",
+        "post": {
+          "summary": "Enqueue a sequence for execution",
+          "operationId": "enqueueSequence",
+          "responses": {
+            "200": {
+              "description": "successful operation",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid status value"
+            }
+          }
+        }
+      },
+
+      "/hnode2/cnc/sequence": {
+        "get": {
+          "summary": "Get list of a running/enqued sequences.",
+          "operationId": "getActiveSequences",
+          "responses": {
+            "200": {
+              "description": "successful operation",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Invalid status value"
+            }
+          }
+        }
+      },
+
+      "/hnode2/cnc/sequence/{seqid}": {
+        "get": {
+          "summary": "Get status of a running/enqued sequence.",
+          "operationId": "getSequenceInfo",
           "responses": {
             "200": {
               "description": "successful operation",
@@ -688,8 +811,8 @@ const std::string g_HNode2TestRest = R"(
           }
         },
         "delete": {
-          "summary": "Delete a specific widget - dummy",
-          "operationId": "deleteWidget",
+          "summary": "Cancel a running/enqueued sequence",
+          "operationId": "cancelSequence",
           "responses": {
             "200": {
               "description": "successful operation",
@@ -708,7 +831,7 @@ const std::string g_HNode2TestRest = R"(
         }
       },
 
-      "/hnode2/test/health": {
+      "/hnode2/cnc/health": {
         "put": {
           "summary": "Cause a health state transistion",
           "operationId": "putTestHealth",

@@ -30,6 +30,7 @@ SET( HNCNCD_SRC
      ${CMAKE_SOURCE_DIR}/src/daemon/CNCAxis.cpp
      ${CMAKE_SOURCE_DIR}/src/daemon/CNCMachine.cpp
      ${CMAKE_SOURCE_DIR}/src/daemon/HNCNCDevice.cpp
+     ${CMAKE_SOURCE_DIR}/src/daemon/HNCNCAction.cpp
      ${CMAKE_SOURCE_DIR}/src/daemon/UIM342Cmd.cpp
      ${CMAKE_SOURCE_DIR}/src/daemon/UIM342Machines.cpp
 )

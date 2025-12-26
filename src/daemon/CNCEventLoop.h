@@ -24,7 +24,8 @@ class CNCEventFD
        ~CNCEventFD();
 
         int getFD();
-
+        bool isMatch( int sfd );
+        
         CNCEVLP_RESULT_T init( CNCEventCB *callback );
 
         void signalEvent();

@@ -27,6 +27,15 @@ CNCEventFD::getFD()
     return m_trigger.getFD();
 }
 
+bool
+CNCEventFD::isMatch( int sfd )
+{
+    if( m_trigger.getFD() == sfd )
+        return true;
+    
+    return false;
+}
+ 
 CNCEVLP_RESULT_T
 CNCEventFD::init( CNCEventCB *callback )
 {

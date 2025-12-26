@@ -13,8 +13,13 @@
 #include <hnode2/HNReqWaitQueue.h>
 
 #include "CNCEventLoop.h"
+#include "HNCNCAction.h"
+#include "CmdSequence.h"
+#include "CNCMachine.h"
+#include "UIM342Cmd.h"
+#include "UIM342Machines.h"
 
-#define HNODE_TEST_DEVTYPE   "hnode2-test-device"
+#define HNODE_CNC_DEVTYPE   "hnode2-cnc-device"
 
 typedef enum HNCNCDeviceResultEnum
 {
@@ -24,7 +29,17 @@ typedef enum HNCNCDeviceResultEnum
   HNCNC_RESULT_SERVER_ERROR
 }HNCNC_RESULT_T;
 
-class HNCNCDevice : public Poco::Util::ServerApplication, public HNDEPDispatchInf, public HNDEventNotifyInf, public CNCEventCB 
+typedef enum HNIDStartActionBitsEnum
+{
+    HNID_ACTBIT_CLEAR     = 0x0000,
+    HNID_ACTBIT_COMPLETE  = 0x0001,
+    HNID_ACTBIT_UPDATE    = 0x0002,
+//    HNID_ACTBIT_RECALCSCH = 0x0004,
+    HNID_ACTBIT_ERROR     = 0x0008,
+//    HNID_ACTBIT_SENDREQ   = 0x0010
+} HNID_ACTBIT_T;
+
+class HNCNCDevice : public Poco::Util::ServerApplication, public HNDEPDispatchInf, public HNDEventNotifyInf, public CNCEventCB, public CNCMachineEventsCB
 {
     private:
         bool _helpRequested   = false;
@@ -52,6 +67,12 @@ class HNCNCDevice : public Poco::Util::ServerApplication, public HNDEPDispatchIn
         // Keep track of health state change simulation
         uint m_healthStateSeq;
 
+        HNCNCAction    *m_curUserAction;
+        HNReqWaitQueue  m_userActionQueue;
+
+        CmdSeqParameters  m_cmdParams;
+        CNCMachine       *m_curMachine;
+
         void displayHelp();
 
         bool configExists();
@@ -60,6 +81,8 @@ class HNCNCDevice : public Poco::Util::ServerApplication, public HNDEPDispatchIn
         HNCNC_RESULT_T updateConfig();
 
         void generateNewHealthState();
+
+        void startAction();
 
     protected:
         // HNDevice REST callback
@@ -82,7 +105,7 @@ class HNCNCDevice : public Poco::Util::ServerApplication, public HNDEPDispatchIn
         void handleOption( const std::string& name, const std::string& value );
         int main( const std::vector<std::string>& args );
 
-
+        virtual void sequenceComplete();
 };
 
 #endif // __HN_CNC_DEVICE_PRIVATE_H__
