@@ -214,34 +214,7 @@ HNCNCAction::generateRspContent( std::ostream &ostr )
         case HNCNC_ATYPE_GET_ACTIVE_SEQUENCES:
         case HNCNC_ATYPE_GET_SEQUENCE_INFO:
         {
-            // Create a json root object
-            pjs::Array jsRoot;
-
-            //for( std::vector< HNIrrigationZone >::iterator zit = refZoneList().begin(); zit != refZoneList().end(); zit++ )
-            //{ 
-                pjs::Object znObj;
-            //    pjs::Array  jsSwitchList;
-
-                znObj.set( "zoneid", "z1" );
-                znObj.set( "name", "name" );
-                znObj.set( "description", "desc" );
-                znObj.set( "secondsPerWeek", 0 );
-                znObj.set( "secondsMaxCycle", 1 );
-                znObj.set( "secondsMinCycle", 2 );
-
-                // Compose Switch List
-            //    for( std::set< std::string >::iterator sit = zit->getSWIDSetRef().begin(); sit != zit->getSWIDSetRef().end(); sit++ )
-            //    {
-            //        jsSwitchList.add( *sit );
-            //    }
-
-                // Add Switch List field
-            //    znObj.set( "swidList", jsSwitchList );
-
-                jsRoot.add( znObj );
-            //}
-
-            try { pjs::Stringifier::stringify( jsRoot, ostr, 1 ); } catch( ... ) { return true; }
+            ostr << m_rspStr;
         }
         break;
 

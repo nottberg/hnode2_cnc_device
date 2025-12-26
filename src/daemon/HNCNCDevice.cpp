@@ -465,6 +465,12 @@ HNCNCDevice::startAction()
 #endif
 
         case HNCNC_ATYPE_GET_STATUS:
+        {
+            m_curUserAction->setResponseJSON( "{\"testfield\":\"test\"}" );
+
+            // Done with this request
+            actBits = HNID_ACTBIT_COMPLETE;
+        }
         break;
 
         case HNCNC_ATYPE_GET_MACHINE_DESC:
