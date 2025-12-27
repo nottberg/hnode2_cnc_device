@@ -97,6 +97,8 @@ class CNCMachine : public CSHardwareInterface, public  CNCSequencerCallbacks
 
         void stop();
 
+        std::string getDescAsJsonStr();
+
         CANDeviceEventSink* getSequencerCANEventSink();
 
         CNCM_RESULT_T startSequence( std::string seqID, CmdSeqParameters *params );

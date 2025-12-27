@@ -270,6 +270,12 @@ CNCMachine::stop()
     m_eventLoop.signalQuit();
 }
 
+std::string
+CNCMachine::getDescAsJsonStr()
+{
+    return "\"machine\":{}";
+}
+
 CANDeviceEventSink*
 CNCMachine::getSequencerCANEventSink()
 {

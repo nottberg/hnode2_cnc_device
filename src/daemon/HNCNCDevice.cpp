@@ -474,6 +474,15 @@ HNCNCDevice::startAction()
         break;
 
         case HNCNC_ATYPE_GET_MACHINE_DESC:
+        {
+            if( m_curMachine )
+            {
+              m_curUserAction->setResponseJSON( m_curMachine->getDescAsJsonStr() );
+            }
+
+            // Done with this request
+            actBits = HNID_ACTBIT_COMPLETE;
+        }
         break;
 
         case HNCNC_ATYPE_GET_SEQ_DEF_LIST:

@@ -195,17 +195,6 @@ HNCNCAction::generateRspContent( std::ostream &ostr )
 {
     switch( m_type )
     {
-#if 0
-        case HNCNC_ATYPE_GET_FILE_LIST:
-        case HNCNC_ATYPE_GET_FILE_INFO:
-        case HNCNC_ATYPE_GET_CAPTURE_LIST:
-        case HNCNC_ATYPE_GET_CAPTURE_INFO:
-        {
-            ostr << m_rspStr;
-        }
-        break;
-#endif
-
         case HNCNC_ATYPE_GET_STATUS:
         case HNCNC_ATYPE_GET_MACHINE_DESC:
         case HNCNC_ATYPE_GET_SEQ_DEF_LIST:
