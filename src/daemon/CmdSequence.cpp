@@ -705,6 +705,17 @@ CmdStep::~CmdStep()
 
 }
 
+void
+CmdStep::populateStepDefJsonObject( void *obj )
+{
+    pjs::Object *stepDefObj = (pjs::Object *) obj;
+
+    if( stepDefObj == NULL )
+        return;
+
+    //stepDefObj->set( "id", m_id );
+}
+
 CS_RESULT_T
 CmdStep::takeNextAction( CmdSeqExecution *exec, CS_STEPACTION_T &rtnAction )
 {
@@ -1043,4 +1054,40 @@ CmdSequence::processFrame( CmdSeqExecution *exec, CANFrame *frame )
     curStep->processFrame( exec, frame );
 
     exec->signalReadyToSchedule();
+}
+
+void
+CmdSequence::setID( std::string id )
+{
+    m_id = id;
+}
+
+std::string
+CmdSequence::getID()
+{
+    return m_id;
+}
+
+
+void
+CmdSequence::populateSeqDefJsonObject( void *obj )
+{
+    pjs::Object *seqDefObj = (pjs::Object *) obj;
+
+    if( seqDefObj == NULL )
+        return;
+
+    seqDefObj->set( "id", m_id );
+
+    pjs::Array stepArray;
+    for( std::vector< CmdStep* >::iterator sit = m_stepList.begin(); sit != m_stepList.end(); sit++ )
+    {
+        pjs::Object stepObj;
+        
+        (*sit)->populateStepDefJsonObject( &stepObj );
+
+        stepArray.add( stepObj );
+    }
+
+    seqDefObj->set( "stepDefs", stepArray );
 }

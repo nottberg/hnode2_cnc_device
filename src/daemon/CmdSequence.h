@@ -310,6 +310,8 @@ class CmdStep
 
         virtual void closeout( CmdSeqExecution *exec );
         
+        void populateStepDefJsonObject( void *obj );
+
     private:
 
         CmdSequence *m_parent;
@@ -344,6 +346,9 @@ class CmdSequence
         CmdSequence();
        ~CmdSequence();
 
+        void setID( std::string id );
+        std::string getID();
+
         void calculateTimeout( uint curTime );
         uint getTimeout();
 
@@ -359,7 +364,11 @@ class CmdSequence
 
         void processFrame( CmdSeqExecution *exec, CANFrame *frame );
 
+        void populateSeqDefJsonObject( void *obj );
+
     private:
+
+        std::string m_id;
 
         std::vector< CmdStep* > m_stepList;
 };

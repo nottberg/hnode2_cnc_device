@@ -539,6 +539,26 @@ CANBus::registerWithEventLoop( CNCEventLoop *loop )
 }
 
 void
+CANBus::populateJsonObject( void *obj )
+{
+    pjs::Object *axisObj = (pjs::Object *) obj;
+
+    if( axisObj == NULL )
+        return;
+
+   	//struct sockaddr_can m_canAddr;
+
+    axisObj->set( "devName", m_deviceName );
+    axisObj->set( "producerID", m_producerID );
+}
+
+void
+CANBus::populateAxisComponentSpecificJson( void *obj )
+{
+
+}
+
+void
 CANBus::eventFD( int fd )
 {
     printf( "CANBus::eventFD - start: %d\n", fd );

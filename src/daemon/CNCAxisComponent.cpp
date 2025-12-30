@@ -1,7 +1,13 @@
 #include <unistd.h>
 #include <sys/eventfd.h>
 
+#include <Poco/JSON/Object.h>
+#include <Poco/StreamCopier.h>
+
 #include "CNCAxisComponent.h"
+
+namespace pjs = Poco::JSON;
+namespace pdy = Poco::Dynamic;
 
 CNCAxisComponent::CNCAxisComponent()
 {
@@ -35,6 +41,20 @@ std::string
 CNCAxisComponent::getFunction()
 {
     return m_function;
+}
+
+void
+CNCAxisComponent::populateJsonObject( void *obj )
+{
+    pjs::Object *compObj = (pjs::Object *) obj;
+
+    if( compObj == NULL )
+        return;
+
+    compObj->set( "id", m_id );
+    compObj->set( "function", m_function );
+
+    populateAxisComponentSpecificJson( obj );
 }
 
 void

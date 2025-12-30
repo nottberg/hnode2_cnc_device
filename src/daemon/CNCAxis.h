@@ -37,6 +37,8 @@ class CNCAxis
 
         CNCA_RESULT_T registerWithEventLoop( CNCEventLoop *loop );
 
+        void populateJsonObject( void *obj );
+        
         virtual void debugPrint();
 
     private:

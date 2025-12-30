@@ -1,7 +1,13 @@
 #include <unistd.h>
 #include <sys/eventfd.h>
 
+#include <Poco/JSON/Object.h>
+#include <Poco/StreamCopier.h>
+
 #include "CNCAxis.h"
+
+namespace pjs = Poco::JSON;
+namespace pdy = Poco::Dynamic;
 
 CNCAxis::CNCAxis()
 {
@@ -116,6 +122,28 @@ CNCAxis::registerWithEventLoop( CNCEventLoop *loop )
     }
 
     return CNCA_RESULT_SUCCESS;
+}
+
+void
+CNCAxis::populateJsonObject( void *obj )
+{
+    pjs::Object *axisObj = (pjs::Object *) obj;
+
+    if( axisObj == NULL )
+        return;
+
+    axisObj->set( "id", m_id );
+
+    pjs::Object components;
+    for( std::map< std::string, CNCAxisComponent* >::iterator cit = m_components.begin(); cit != m_components.end(); cit++ )
+    {
+        pjs::Object component;
+        cit->second->populateJsonObject( &component );
+
+        components.set( cit->first, component );
+    }
+    axisObj->set( "components", components );
+
 }
 
 CNCA_RESULT_T

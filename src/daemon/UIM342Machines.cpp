@@ -12,6 +12,20 @@ UIM342Motor::~UIM342Motor()
 
 }
 
+void
+UIM342Motor::populateAxisComponentSpecificJson( void *obj )
+{
+    pjs::Object *compObj = (pjs::Object *) obj;
+
+    uint CANDeviceID;
+    uint CANGroupID;
+    getBusID( CANDeviceID, CANGroupID );
+   	//struct sockaddr_can m_canAddr;
+
+    compObj->set( "canDeviceID", CANDeviceID );
+    compObj->set( "canGroupID", CANGroupID );
+}
+
 UIM342SingleAxisMachine::UIM342SingleAxisMachine()
 {
 
@@ -29,11 +43,13 @@ UIM342SingleAxisMachine::setup()
     //m_bus.appendRequest( request );
 
     //m_curMachine = new CNCMachine();
+    m_canBus.setID( "cbus0" );
+    addBus( m_canBus.getID(), &m_canBus );
 
     //setCanBus( "cbus0", new CANBus() );
-    m_axisX.setID( "XAxis" );
+    m_axisX.setID( "X" );
 
-    m_canBus.setID( "cbus0" );
+
     m_axisX.addComponent( m_canBus.getID(), CNCACOMP_FUNC_CANBUS_CONTROLLER, &m_canBus );
 
     m_motor.setID( "XMotor" );

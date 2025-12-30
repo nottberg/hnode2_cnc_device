@@ -27,9 +27,13 @@ class CNCAxisComponent : public CNCEventCB
         void setFunction( std::string function );
         std::string getFunction();
 
+        void populateJsonObject( void *obj );
+
         virtual void eventFD( int fd );
 
         virtual CNCACOMP_RESULT_T registerWithEventLoop( CNCEventLoop *loop );
+
+        virtual void populateAxisComponentSpecificJson( void *obj ) = 0;
 
     private:
 

@@ -1,7 +1,13 @@
 #include <unistd.h>
 #include <sys/eventfd.h>
 
+#include <Poco/JSON/Object.h>
+#include <Poco/StreamCopier.h>
+
 #include "CNCMachine.h"
+
+namespace pjs = Poco::JSON;
+namespace pdy = Poco::Dynamic;
 
 CNCSequencer::CNCSequencer()
 {
@@ -39,8 +45,33 @@ void
 CNCSequencer::addSequence( std::string seqID, CmdSequence *seqObj )
 {
     printf( "CNCSequencer::addSequence - %s\n", seqID.c_str() );
+    
+    seqObj->setID( seqID );
 
     m_cmdSequences.insert( std::pair<std::string, CmdSequence*>( seqID, seqObj ) );
+}
+
+std::string
+CNCSequencer::getSequenceDefinitionListJsonStr()
+{
+    std::ostringstream rtnStr;
+    pjs::Object seqDefMap;
+
+    for( std::map< std::string, CmdSequence* >::iterator sit = m_cmdSequences.begin(); sit != m_cmdSequences.end(); sit++ )
+    {
+        pjs::Object seqDef;
+
+        sit->second->populateSeqDefJsonObject( &seqDef );
+
+        seqDefMap.set( sit->first, seqDef );
+    }
+
+    try {
+        pjs::Stringifier::stringify( seqDefMap, rtnStr, 1 ); 
+    } catch( ... ) { 
+    }
+
+    return rtnStr.str();
 }
 
 CNCM_RESULT_T
@@ -273,7 +304,49 @@ CNCMachine::stop()
 std::string
 CNCMachine::getDescAsJsonStr()
 {
-    return "\"machine\":{}";
+    std::ostringstream rtnStr;
+    pjs::Object machineObj;
+    pjs::Array  jsSwitchList;
+
+    machineObj.set( "name", "" );
+    machineObj.set( "model", "" );
+    machineObj.set( "type", "" );
+
+    pjs::Object axes;
+    for( std::map< std::string, CNCAxis* >::iterator ait = m_axes.begin(); ait != m_axes.end(); ait++ )
+    {
+        pjs::Object axis;
+
+        ait->second->populateJsonObject( &axis );
+
+        axes.set( ait->first, axis );
+    }
+    machineObj.set( "axes", axes );
+
+    pjs::Object buses;
+    for( std::map< std::string, CANBus* >::iterator bit = m_canBuses.begin(); bit != m_canBuses.end(); bit++ )
+    {
+        pjs::Object bus;
+        bus.set( "type", "CAN" );
+
+        bit->second->populateJsonObject( &bus );
+
+        buses.set( bit->first, bus );
+    }
+    machineObj.set( "buses", buses );
+
+    try {
+        pjs::Stringifier::stringify( machineObj, rtnStr, 1 ); 
+    } catch( ... ) { 
+    }
+
+    return rtnStr.str();
+}
+
+std::string
+CNCMachine::getSequenceDefinitionListJsonStr()
+{
+    return m_sequencer.getSequenceDefinitionListJsonStr();
 }
 
 CANDeviceEventSink*
@@ -312,6 +385,18 @@ void
 CNCMachine::removeEventObserver( CNCMachineEventsCB *obsPtr )
 {
     //std::vector< CNCMachineEventsCB* > m_obsList
+}
+
+void
+CNCMachine::addBus( std::string busID, CANBus *busObj )
+{
+    m_canBuses.insert( std::pair< std::string, CANBus* >( busID, busObj ) );
+}
+
+void
+CNCMachine::removeBus( std::string busID )
+{
+
 }
 
 void

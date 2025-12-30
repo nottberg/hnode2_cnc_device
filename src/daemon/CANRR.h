@@ -11,7 +11,13 @@
 #include <linux/can.h>
 #include <linux/can/raw.h>
 
+#include <Poco/JSON/Object.h>
+#include <Poco/StreamCopier.h>
+
 #include "CNCAxisComponent.h"
+
+namespace pjs = Poco::JSON;
+namespace pdy = Poco::Dynamic;
 
 #define CANFRAME_MAX_DATA_LENGTH    8
 
@@ -103,6 +109,10 @@ class CANBus : public CNCAxisComponent
         CANRR_RESULT_T sendFrame( CANFrame *frame );
 
         virtual CNCACOMP_RESULT_T registerWithEventLoop( CNCEventLoop *loop );
+
+        void populateJsonObject( void *obj );
+
+        virtual void populateAxisComponentSpecificJson( void *obj );
 
     private:
 

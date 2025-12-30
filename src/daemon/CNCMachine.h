@@ -54,6 +54,8 @@ class CNCSequencer : public CNCEventCB, CmdSequenceEventCallback, CANDeviceEvent
 
         virtual void SEQEVReadyToSchedule();
 
+        std::string getSequenceDefinitionListJsonStr();
+
     private:
 
         void finishCurrentSequence();
@@ -110,6 +112,8 @@ class CNCMachine : public CSHardwareInterface, public  CNCSequencerCallbacks
         virtual void CNCSCSequenceComplete( std::string execID );
 
         void addSequence( std::string seqID, CmdSequence *seqObj );
+
+        std::string getSequenceDefinitionListJsonStr();
 
         virtual CNCM_RESULT_T setup() = 0;
 

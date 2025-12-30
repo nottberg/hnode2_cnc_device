@@ -14,6 +14,8 @@ class UIM342Motor : public CANDevice
         UIM342Motor();
        ~UIM342Motor();
 
+        virtual void populateAxisComponentSpecificJson( void *obj );
+
     private:
 
 };

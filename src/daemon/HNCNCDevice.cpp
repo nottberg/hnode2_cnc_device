@@ -26,7 +26,7 @@ namespace pjs = Poco::JSON;
 namespace pdy = Poco::Dynamic;
 
 // Forward declaration
-extern const std::string g_HNode2TestRest;
+extern const std::string g_HNode2CNCRest;
 
 void 
 HNCNCDevice::defineOptions( OptionSet& options )
@@ -85,8 +85,8 @@ HNCNCDevice::main( const std::vector<std::string>& args )
 
     HNDEndpoint hndEP;
 
-    hndEP.setDispatch( "hnode2Test", this );
-    hndEP.setOpenAPIJson( g_HNode2TestRest ); 
+    hndEP.setDispatch( "hnode2CNC", this );
+    hndEP.setOpenAPIJson( g_HNode2CNCRest ); 
 
     m_hnodeDev.addEndpoint( hndEP );
 
@@ -486,6 +486,13 @@ HNCNCDevice::startAction()
         break;
 
         case HNCNC_ATYPE_GET_SEQ_DEF_LIST:
+            if( m_curMachine )
+            {
+              m_curUserAction->setResponseJSON( m_curMachine->getSequenceDefinitionListJsonStr() );
+            }
+
+            // Done with this request
+            actBits = HNID_ACTBIT_COMPLETE;
         break;
 
         case HNCNC_ATYPE_GET_SEQ_DEF_INFO:
@@ -667,7 +674,7 @@ HNCNCDevice::dispatchEP( HNodeDevice *parent, HNOperationData *opData )
     opData->responseSend();
 }
 
-const std::string g_HNode2TestRest = R"(
+const std::string g_HNode2CNCRest = R"(
 {
   "openapi": "3.0.0",
   "info": {
