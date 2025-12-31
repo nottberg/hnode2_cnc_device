@@ -14,6 +14,8 @@ class UIM342GetMotorSNStep : public CmdStepExecuteCANRR
         UIM342GetMotorSNStep();
        ~UIM342GetMotorSNStep();
 
+        virtual void getNameAndDesc( std::string &name, std::string &desc );
+
         virtual CS_RESULT_T formatRequest( CmdSeqExecution *exec, CANFrame *frame );
         virtual CS_RESULT_T parseResponse( CmdSeqExecution *exec, CANFrame *frame );
 
@@ -26,6 +28,8 @@ class UIM342GetMotorModelStep : public CmdStepExecuteCANRR
     public:
         UIM342GetMotorModelStep();
        ~UIM342GetMotorModelStep();
+
+        virtual void getNameAndDesc( std::string &name, std::string &desc );
 
         virtual CS_RESULT_T formatRequest( CmdSeqExecution *exec, CANFrame *frame );
         virtual CS_RESULT_T parseResponse( CmdSeqExecution *exec, CANFrame *frame );
@@ -40,6 +44,8 @@ class UIM342GetMotorCANBitrateStep : public CmdStepExecuteCANRR
         UIM342GetMotorCANBitrateStep();
        ~UIM342GetMotorCANBitrateStep();
 
+        virtual void getNameAndDesc( std::string &name, std::string &desc );
+
         virtual CS_RESULT_T formatRequest( CmdSeqExecution *exec, CANFrame *frame );
         virtual CS_RESULT_T parseResponse( CmdSeqExecution *exec, CANFrame *frame );
 
@@ -53,6 +59,8 @@ class UIM342GetMotorCANNodeIDStep : public CmdStepExecuteCANRR
         UIM342GetMotorCANNodeIDStep();
        ~UIM342GetMotorCANNodeIDStep();
 
+        virtual void getNameAndDesc( std::string &name, std::string &desc );
+
         virtual CS_RESULT_T formatRequest( CmdSeqExecution *exec, CANFrame *frame );
         virtual CS_RESULT_T parseResponse( CmdSeqExecution *exec, CANFrame *frame );
 
@@ -65,6 +73,8 @@ class UIM342GetMotorCANGroupIDStep : public CmdStepExecuteCANRR
     public:
         UIM342GetMotorCANGroupIDStep();
        ~UIM342GetMotorCANGroupIDStep();
+
+        virtual void getNameAndDesc( std::string &name, std::string &desc );
 
         virtual CS_RESULT_T formatRequest( CmdSeqExecution *exec, CANFrame *frame );
         virtual CS_RESULT_T parseResponse( CmdSeqExecution *exec, CANFrame *frame );
@@ -91,6 +101,8 @@ class UIM342GetInitialConfigurationStep : public CmdStepExecuteCANRR
         UIM342GetInitialConfigurationStep( UIM342_ICP_TYPE_T paramID );
        ~UIM342GetInitialConfigurationStep();
 
+        virtual void getNameAndDesc( std::string &name, std::string &desc );
+
         virtual CS_RESULT_T formatRequest( CmdSeqExecution *exec, CANFrame *frame );
         virtual CS_RESULT_T parseResponse( CmdSeqExecution *exec, CANFrame *frame );
 
@@ -112,6 +124,8 @@ class UIM342GetInformationEnableStep : public CmdStepExecuteCANRR
     public:
         UIM342GetInformationEnableStep( UIM342_IEP_TYPE_T paramID );
        ~UIM342GetInformationEnableStep();
+
+        virtual void getNameAndDesc( std::string &name, std::string &desc );
 
         virtual CS_RESULT_T formatRequest( CmdSeqExecution *exec, CANFrame *frame );
         virtual CS_RESULT_T parseResponse( CmdSeqExecution *exec, CANFrame *frame );
@@ -136,6 +150,8 @@ class UIM342GetQuadratureEncoderStep : public CmdStepExecuteCANRR
         UIM342GetQuadratureEncoderStep( UIM342_QEP_TYPE_T paramID);
        ~UIM342GetQuadratureEncoderStep();
 
+        virtual void getNameAndDesc( std::string &name, std::string &desc );
+
         virtual CS_RESULT_T formatRequest( CmdSeqExecution *exec, CANFrame *frame );
         virtual CS_RESULT_T parseResponse( CmdSeqExecution *exec, CANFrame *frame );
 
@@ -158,6 +174,8 @@ class UIM342GetMotorDriverStep : public CmdStepExecuteCANRR
         UIM342GetMotorDriverStep( UIM342_MTP_TYPE_T paramID );
        ~UIM342GetMotorDriverStep();
 
+        virtual void getNameAndDesc( std::string &name, std::string &desc );
+
         virtual CS_RESULT_T formatRequest( CmdSeqExecution *exec, CANFrame *frame );
         virtual CS_RESULT_T parseResponse( CmdSeqExecution *exec, CANFrame *frame );
 
@@ -173,6 +191,8 @@ class UIM342GetMTStateStep : public CmdStepExecuteCANRR
         UIM342GetMTStateStep();
        ~UIM342GetMTStateStep();
 
+        virtual void getNameAndDesc( std::string &name, std::string &desc );
+
         virtual CS_RESULT_T formatRequest( CmdSeqExecution *exec, CANFrame *frame );
         virtual CS_RESULT_T parseResponse( CmdSeqExecution *exec, CANFrame *frame );
 
@@ -185,6 +205,8 @@ class UIM342GetRelativePositionStep : public CmdStepExecuteCANRR
     public:
         UIM342GetRelativePositionStep();
        ~UIM342GetRelativePositionStep();
+
+        virtual void getNameAndDesc( std::string &name, std::string &desc );
 
         virtual CS_RESULT_T formatRequest( CmdSeqExecution *exec, CANFrame *frame );
         virtual CS_RESULT_T parseResponse( CmdSeqExecution *exec, CANFrame *frame );
@@ -199,6 +221,8 @@ class UIM342GetAbsolutePositionStep : public CmdStepExecuteCANRR
         UIM342GetAbsolutePositionStep();
        ~UIM342GetAbsolutePositionStep();
 
+        virtual void getNameAndDesc( std::string &name, std::string &desc );
+
         virtual CS_RESULT_T formatRequest( CmdSeqExecution *exec, CANFrame *frame );
         virtual CS_RESULT_T parseResponse( CmdSeqExecution *exec, CANFrame *frame );
 
@@ -211,6 +235,8 @@ class UIM342SetMDEnableStep : public CmdStepExecuteCANRR
     public:
         UIM342SetMDEnableStep();
         ~UIM342SetMDEnableStep();
+
+        virtual void getNameAndDesc( std::string &name, std::string &desc );
 
         virtual CS_RESULT_T formatRequest( CmdSeqExecution *exec, CANFrame *frame );
         virtual CS_RESULT_T parseResponse( CmdSeqExecution *exec, CANFrame *frame );
@@ -225,6 +251,8 @@ class UIM342SetMotionSpeedStep : public CmdStepExecuteCANRR
         UIM342SetMotionSpeedStep();
         ~UIM342SetMotionSpeedStep();
 
+        virtual void getNameAndDesc( std::string &name, std::string &desc );
+
         virtual CS_RESULT_T formatRequest( CmdSeqExecution *exec, CANFrame *frame );
         virtual CS_RESULT_T parseResponse( CmdSeqExecution *exec, CANFrame *frame );
 
@@ -237,6 +265,8 @@ class UIM342SetMotionRelativePositionStep : public CmdStepExecuteCANRR
     public:
         UIM342SetMotionRelativePositionStep();
         ~UIM342SetMotionRelativePositionStep();
+
+        virtual void getNameAndDesc( std::string &name, std::string &desc );
 
         virtual CS_RESULT_T formatRequest( CmdSeqExecution *exec, CANFrame *frame );
         virtual CS_RESULT_T parseResponse( CmdSeqExecution *exec, CANFrame *frame );
@@ -251,6 +281,8 @@ class UIM342SetBeginMotionStep : public CmdStepExecuteCANRR
         UIM342SetBeginMotionStep();
         ~UIM342SetBeginMotionStep();
 
+        virtual void getNameAndDesc( std::string &name, std::string &desc );
+
         virtual CS_RESULT_T formatRequest( CmdSeqExecution *exec, CANFrame *frame );
         virtual CS_RESULT_T parseResponse( CmdSeqExecution *exec, CANFrame *frame );
 
@@ -264,6 +296,8 @@ class UIM342SetStopMotionStep : public CmdStepExecuteCANRR
         UIM342SetStopMotionStep();
         ~UIM342SetStopMotionStep();
 
+        virtual void getNameAndDesc( std::string &name, std::string &desc );
+
         virtual CS_RESULT_T formatRequest( CmdSeqExecution *exec, CANFrame *frame );
         virtual CS_RESULT_T parseResponse( CmdSeqExecution *exec, CANFrame *frame );
 
@@ -276,6 +310,8 @@ class UIM342WaitMotionCompleteStep : public CmdStepExecuteCANRR
     public:
         UIM342WaitMotionCompleteStep();
         ~UIM342WaitMotionCompleteStep();
+
+        virtual void getNameAndDesc( std::string &name, std::string &desc );
 
         virtual CS_RESULT_T formatRequest( CmdSeqExecution *exec, CANFrame *frame );
         virtual CS_RESULT_T parseResponse( CmdSeqExecution *exec, CANFrame *frame );

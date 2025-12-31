@@ -713,7 +713,12 @@ CmdStep::populateStepDefJsonObject( void *obj )
     if( stepDefObj == NULL )
         return;
 
-    //stepDefObj->set( "id", m_id );
+    std::string name;
+    std::string desc;
+    getNameAndDesc( name, desc );
+
+    stepDefObj->set( "name", name );
+    stepDefObj->set( "description", desc );
 }
 
 CS_RESULT_T

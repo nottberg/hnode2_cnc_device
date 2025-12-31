@@ -302,6 +302,8 @@ class CmdStep
         // Get the step ready for execution
         virtual void readyStep( CmdSeqExecution *exec );
 
+        virtual void getNameAndDesc( std::string &name, std::string &desc ) = 0;
+
         virtual CS_STEPACTION_T startStep( CmdSeqExecution *exec ) = 0;
 
         virtual CS_STEPACTION_T continueStep( CmdSeqExecution *exec ) = 0;

@@ -12,6 +12,13 @@ UIM342GetMotorSNStep::~UIM342GetMotorSNStep()
 
 }
 
+void
+UIM342GetMotorSNStep::getNameAndDesc( std::string &name, std::string &desc )
+{
+    name = "GetSerialNumber";
+    desc = "CAN UIM Get Motor Serial Number";
+}
+
 CS_RESULT_T
 UIM342GetMotorSNStep::formatRequest( CmdSeqExecution *exec, CANFrame *frame )
 {
@@ -47,6 +54,13 @@ UIM342GetMotorModelStep::UIM342GetMotorModelStep()
 UIM342GetMotorModelStep::~UIM342GetMotorModelStep()
 {
 
+}
+
+void
+UIM342GetMotorModelStep::getNameAndDesc( std::string &name, std::string &desc )
+{
+    name = "GetModel";
+    desc = "CAN UIM Get Motor Model";
 }
 
 CS_RESULT_T
@@ -90,6 +104,13 @@ UIM342GetMotorCANBitrateStep::UIM342GetMotorCANBitrateStep()
 UIM342GetMotorCANBitrateStep::~UIM342GetMotorCANBitrateStep()
 {
 
+}
+
+void
+UIM342GetMotorCANBitrateStep::getNameAndDesc( std::string &name, std::string &desc )
+{
+    name = "GetCANBitrate";
+    desc = "CAN UIM Get Bus Bitrate";
 }
 
 CS_RESULT_T
@@ -155,6 +176,13 @@ UIM342GetMotorCANNodeIDStep::~UIM342GetMotorCANNodeIDStep()
 
 }
 
+void
+UIM342GetMotorCANNodeIDStep::getNameAndDesc( std::string &name, std::string &desc )
+{
+    name = "GetCANNodeID";
+    desc = "CAN UIM Get Bus Node ID";
+}
+
 CS_RESULT_T
 UIM342GetMotorCANNodeIDStep::formatRequest( CmdSeqExecution *exec, CANFrame *frame )
 {
@@ -186,6 +214,13 @@ UIM342GetMotorCANGroupIDStep::UIM342GetMotorCANGroupIDStep()
 UIM342GetMotorCANGroupIDStep::~UIM342GetMotorCANGroupIDStep()
 {
 
+}
+
+void
+UIM342GetMotorCANGroupIDStep::getNameAndDesc( std::string &name, std::string &desc )
+{
+    name = "GetCANGroupID";
+    desc = "CAN UIM Get Bus Group ID";
 }
 
 CS_RESULT_T
@@ -222,6 +257,53 @@ UIM342GetInitialConfigurationStep::UIM342GetInitialConfigurationStep( UIM342_ICP
 UIM342GetInitialConfigurationStep::~UIM342GetInitialConfigurationStep()
 {
 
+}
+
+void
+UIM342GetInitialConfigurationStep::getNameAndDesc( std::string &name, std::string &desc )
+{
+    switch( m_paramID )
+    {
+        case UIM342_ICP_MOTOR_DRIVER_ON_POWER:
+            name = "GetMotorDriverOnAfterPowerIsOn";
+            desc = "CAN UIM Get motor drive is on after power on";
+        break;
+
+        case UIM342_ICP_POSITIVE_DIRECTION:
+            name = "GetMotorDriveDirection";
+            desc = "CAN UIM Get motor drive positive rotation direction";
+        break;
+
+        case UIM342_ICP_EXEC_USER_ON_POWER:
+            name = "GetMotorDriverUserProgramOnPower";
+            desc = "CAN UIM Get motor drive runs user program on power on";
+        break;
+
+        case UIM342_ICP_LOCK_ON_ESTOP:
+            name = "GetMotorDriverLockInEStop";
+            desc = "CAN UIM Get motor drive locks on E-Stop";
+        break;
+
+        case UIM342_ICP_UNITS_ACDC:
+            name = "GetMotorPowerUnits";
+            desc = "CAN UIM Get motor drive power measurement units";
+        break;
+
+        case UIM342_ICP_ENCODER_TYPE:
+            name = "GetMotorEncoderType";
+            desc = "CAN UIM Get motor encoder type";
+        break;
+
+        case UIM342_ICP_CONTROL_TYPE:
+            name = "GetMotorControlType";
+            desc = "CAN UIM Motor Control Scheme";
+        break;
+
+        case UIM342_ICP_SOFTWARE_LIMIT:
+            name = "GetSoftwareLimit";
+            desc = "CAN UIM Get ICP Software Limit";
+        break;
+    }
 }
 
 CS_RESULT_T
@@ -317,6 +399,35 @@ UIM342GetInformationEnableStep::~UIM342GetInformationEnableStep()
 
 }
 
+void
+UIM342GetInformationEnableStep::getNameAndDesc( std::string &name, std::string &desc )
+{
+
+    switch( m_paramID )
+    {
+        case UIM342_IEP_IN1_CHANGE_NOTIFY:
+            name = "GetIN1ChangeNotify";
+            desc = "CAN UIM Input 1 Change Notify Setting.";
+        break;
+
+        case UIM342_IEP_IN2_CHANGE_NOTIFY:
+            name = "GetIN2ChangeNotify";
+            desc = "CAN UIM Input 2 Change Notify Setting.";
+        break;
+
+        case UIM342_IEP_IN3_CHANGE_NOTIFY:
+            name = "GetIN3ChangeNotify";
+            desc = "CAN UIM Input 3 Change Notify Setting.";
+        break;
+
+        case UIM342_IEP_PTP_FINISH_NOTIFY:
+            name = "GetPTPFinishNotify";
+            desc = "CAN UIM Point to Point Finish Notify Setting.";
+        break;
+    }
+
+}
+
 CS_RESULT_T
 UIM342GetInformationEnableStep::formatRequest( CmdSeqExecution *exec, CANFrame *frame )
 {
@@ -344,28 +455,28 @@ UIM342GetInformationEnableStep::parseResponse( CmdSeqExecution *exec, CANFrame *
             if( PValue == 0 )
                 exec->getResultData()->updateBoolean( "IE_PIN1ChangeNotification", false );
            else
-                exec->getResultData()->updateBoolean( "IE_PIN1ChangeNotification", false );
+                exec->getResultData()->updateBoolean( "IE_PIN1ChangeNotification", true );
         break;
 
         case UIM342_IEP_IN2_CHANGE_NOTIFY:
             if( PValue == 0 )
                 exec->getResultData()->updateBoolean( "IE_PIN2ChangeNotification", false );
             else
-                exec->getResultData()->updateBoolean( "IE_PIN2ChangeNotification", false );
+                exec->getResultData()->updateBoolean( "IE_PIN2ChangeNotification", true );
         break;
 
         case UIM342_IEP_IN3_CHANGE_NOTIFY:
             if( PValue == 0 )
                 exec->getResultData()->updateBoolean( "IE_PIN3ChangeNotification", false );
             else
-                exec->getResultData()->updateBoolean( "IE_PIN3ChangeNotification", false );
+                exec->getResultData()->updateBoolean( "IE_PIN3ChangeNotification", true );
         break;
 
         case UIM342_IEP_PTP_FINISH_NOTIFY:
             if( PValue == 0 )
                 exec->getResultData()->updateBoolean( "IE_PTPFinishNotification", false );
             else
-                exec->getResultData()->updateBoolean( "IE_PTPFinishNotification", false );
+                exec->getResultData()->updateBoolean( "IE_PTPFinishNotification", true );
         break;
     }
 
@@ -379,6 +490,40 @@ UIM342GetQuadratureEncoderStep::UIM342GetQuadratureEncoderStep( UIM342_QEP_TYPE_
 
 UIM342GetQuadratureEncoderStep::~UIM342GetQuadratureEncoderStep()
 {
+
+}
+
+void
+UIM342GetQuadratureEncoderStep::getNameAndDesc( std::string &name, std::string &desc )
+{
+
+    switch( m_paramID )
+    {
+        case UIM342_QEP_LINES_PER_REV:
+            name = "GetQELinesPerRev";
+            desc = "CAN UIM Quadrature Encoder Lines Per Revolution";
+        break;
+
+        case UIM342_QEP_STALL_TOLERANCE:
+            name = "GetQEStallTolerance";
+            desc = "CAN UIM Quadrature Encoder Stall Tolerance";
+        break;
+
+        case UIM342_QEP_SINGLE_TURN_BITS:
+            name = "GetQESingleTurnBits";
+            desc = "CAN UIM Quadrature Encoder Single Turn Bits";
+        break;
+
+        case UIM342_QEP_BATTERY_STATUS:
+            name = "GetQEBatteryStatus";
+            desc = "CAN UIM Quadrature Encoder Battery Status";
+        break;
+
+        case UIM342_QEP_COUNTS_PER_REV:
+            name = "GetQECountsPerRevolution";
+            desc = "CAN UIM Quadrature Encoder Counts Per Revolution";
+        break;
+    }
 
 }
 
@@ -442,6 +587,33 @@ UIM342GetMotorDriverStep::~UIM342GetMotorDriverStep()
 
 }
 
+void
+UIM342GetMotorDriverStep::getNameAndDesc( std::string &name, std::string &desc )
+{
+    switch( m_paramID )
+    {
+        case UIM342_MTP_MICROSTEP_RES:
+            name = "GetMotorMicrostepResolution";
+            desc = "CAN UIM Motor Microstep Resolution";
+        break;
+
+        case UIM342_MTP_WORKING_CURRENT:
+            name = "GetMotorWorkingCurrent";
+            desc = "CAN UIM Motor Microstep Resolution";
+        break;
+
+        case UIM342_MTP_PERCENT_IDLE_OVER_WORKING:
+            name = "GetMotorIdleOverWorkingRatio";
+            desc = "CAN UIM Motor Idle Over Working Ratio";
+        break;
+
+        case UIM342_MTP_DELAY_TO_ENABLE:
+            name = "GetMotorDelayToEnable";
+            desc = "CAN UIM Motor Delay To Enable";
+        break;
+    }
+}
+
 CS_RESULT_T
 UIM342GetMotorDriverStep::formatRequest( CmdSeqExecution *exec, CANFrame *frame )
 {
@@ -498,6 +670,13 @@ UIM342GetMTStateStep::~UIM342GetMTStateStep()
 
 }
 
+void
+UIM342GetMTStateStep::getNameAndDesc( std::string &name, std::string &desc )
+{
+    name = "GetMTState";
+    desc = "CAN UIM Motor State";
+}
+
 CS_RESULT_T
 UIM342GetMTStateStep::formatRequest( CmdSeqExecution *exec, CANFrame *frame )
 {
@@ -531,6 +710,13 @@ UIM342GetRelativePositionStep::~UIM342GetRelativePositionStep()
 
 }
 
+void
+UIM342GetRelativePositionStep::getNameAndDesc( std::string &name, std::string &desc )
+{
+    name = "GetRelativePosition";
+    desc = "CAN UIM Encoder Relative Position";
+}
+
 CS_RESULT_T
 UIM342GetRelativePositionStep::formatRequest( CmdSeqExecution *exec, CANFrame *frame )
 {
@@ -561,6 +747,13 @@ UIM342GetAbsolutePositionStep::~UIM342GetAbsolutePositionStep()
 
 }
 
+void
+UIM342GetAbsolutePositionStep::getNameAndDesc( std::string &name, std::string &desc )
+{
+    name = "GetAbsolutePosition";
+    desc = "CAN UIM Encoder Absolute Position";
+}
+
 CS_RESULT_T
 UIM342GetAbsolutePositionStep::formatRequest( CmdSeqExecution *exec, CANFrame *frame )
 {
@@ -589,6 +782,13 @@ UIM342SetMDEnableStep::UIM342SetMDEnableStep()
 UIM342SetMDEnableStep::~UIM342SetMDEnableStep()
 {
 
+}
+
+void
+UIM342SetMDEnableStep::getNameAndDesc( std::string &name, std::string &desc )
+{
+    name = "GetMDEnable";
+    desc = "CAN UIM Motor Driver Enable State";
 }
 
 CS_RESULT_T
@@ -628,6 +828,13 @@ UIM342SetMotionSpeedStep::~UIM342SetMotionSpeedStep()
 
 }
 
+void
+UIM342SetMotionSpeedStep::getNameAndDesc( std::string &name, std::string &desc )
+{
+    name = "SetMotionSpeed";
+    desc = "CAN UIM Set Motion Target Speed";
+}
+
 CS_RESULT_T
 UIM342SetMotionSpeedStep::formatRequest( CmdSeqExecution *exec, CANFrame *frame )
 {
@@ -661,6 +868,13 @@ UIM342SetMotionRelativePositionStep::~UIM342SetMotionRelativePositionStep()
 
 }
 
+void
+UIM342SetMotionRelativePositionStep::getNameAndDesc( std::string &name, std::string &desc )
+{
+    name = "SetEncoderRelativePosition";
+    desc = "CAN UIM Set Encoder Relative Position";
+}
+
 CS_RESULT_T
 UIM342SetMotionRelativePositionStep::formatRequest( CmdSeqExecution *exec, CANFrame *frame )
 {
@@ -692,6 +906,13 @@ UIM342SetBeginMotionStep::~UIM342SetBeginMotionStep()
 
 }
 
+void
+UIM342SetBeginMotionStep::getNameAndDesc( std::string &name, std::string &desc )
+{
+    name = "BeginMotion";
+    desc = "CAN UIM Begin Motion Command";
+}
+
 CS_RESULT_T
 UIM342SetBeginMotionStep::formatRequest( CmdSeqExecution *exec, CANFrame *frame )
 {
@@ -714,6 +935,13 @@ UIM342WaitMotionCompleteStep::UIM342WaitMotionCompleteStep()
 UIM342WaitMotionCompleteStep::~UIM342WaitMotionCompleteStep()
 {
 
+}
+
+void
+UIM342WaitMotionCompleteStep::getNameAndDesc( std::string &name, std::string &desc )
+{
+    name = "WaitMotionComplete";
+    desc = "CAN UIM Wait For Motion Complete";
 }
 
 CS_RESULT_T
@@ -742,6 +970,13 @@ UIM342SetStopMotionStep::UIM342SetStopMotionStep()
 UIM342SetStopMotionStep::~UIM342SetStopMotionStep()
 {
 
+}
+
+void
+UIM342SetStopMotionStep::getNameAndDesc( std::string &name, std::string &desc )
+{
+    name = "StopMotion";
+    desc = "CAN UIM Stop Motion Command";
 }
 
 CS_RESULT_T
