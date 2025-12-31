@@ -42,15 +42,15 @@ HNCNCAction::getRequestCaptureID()
 }
 
 void
-HNCNCAction::setRequestFileID( std::string id )
+HNCNCAction::setSeqDefID( std::string id )
 {
-    m_reqFileID = id;
+    m_seqDefID = id;
 }
 
 std::string
-HNCNCAction::getRequestFileID()
+HNCNCAction::getSeqDefID()
 {
-    return m_reqFileID;
+    return m_seqDefID;
 }
 
 bool

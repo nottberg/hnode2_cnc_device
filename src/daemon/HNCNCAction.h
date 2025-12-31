@@ -59,8 +59,8 @@ class HNCNCAction : public HNReqWaitAction
         void setRequestCaptureID( std::string id );
         std::string getRequestCaptureID();
 
-        void setRequestFileID( std::string id );
-        std::string getRequestFileID();
+        void setSeqDefID( std::string id );
+        std::string getSeqDefID();
 
         HNCNC_ATYPE_T getType();
 
@@ -77,7 +77,7 @@ class HNCNCAction : public HNReqWaitAction
 
         std::string m_reqCaptureID;
 
-        std::string m_reqFileID;
+        std::string m_seqDefID;
 
         std::string m_rspStr;
 

@@ -74,6 +74,27 @@ CNCSequencer::getSequenceDefinitionListJsonStr()
     return rtnStr.str();
 }
 
+std::string
+CNCSequencer::getSequenceDefinitionJsonStr( std::string seqID )
+{
+    std::ostringstream rtnStr;
+    pjs::Object seqDef;
+
+    std::map< std::string, CmdSequence* >::iterator sit = m_cmdSequences.find( seqID );
+
+    if( sit == m_cmdSequences.end() )
+        return "";
+
+    sit->second->populateSeqDefJsonObject( &seqDef );
+
+    try {
+        pjs::Stringifier::stringify( seqDef, rtnStr, 1 ); 
+    } catch( ... ) { 
+    }
+
+    return rtnStr.str();
+}
+
 CNCM_RESULT_T
 CNCSequencer::startSequence( std::string seqID, CmdSeqParameters *params, std::string &execID )
 {
@@ -347,6 +368,12 @@ std::string
 CNCMachine::getSequenceDefinitionListJsonStr()
 {
     return m_sequencer.getSequenceDefinitionListJsonStr();
+}
+
+std::string
+CNCMachine::getSequenceDefinitionJsonStr( std::string seqID )
+{
+    return m_sequencer.getSequenceDefinitionJsonStr( seqID );
 }
 
 CANDeviceEventSink*
