@@ -54,13 +54,17 @@ class HNCNCAction : public HNReqWaitAction
 
         void setNewID( std::string id );
         
-        bool decodeStartCapture( std::istream& bodyStream );
+        bool decodeEnqueueSequence( std::istream& bodyStream );
 
         void setRequestCaptureID( std::string id );
         std::string getRequestCaptureID();
 
         void setSeqDefID( std::string id );
         std::string getSeqDefID();
+
+        CmdSeqParameters* getSeqParameters();
+
+        void addSeqParam( std::string name, std::string value );
 
         HNCNC_ATYPE_T getType();
 
@@ -78,6 +82,8 @@ class HNCNCAction : public HNReqWaitAction
         std::string m_reqCaptureID;
 
         std::string m_seqDefID;
+
+        CmdSeqParameters *m_seqParameters;
 
         std::string m_rspStr;
 

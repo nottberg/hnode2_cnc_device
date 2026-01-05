@@ -811,8 +811,18 @@ CmdStepExecuteCANRR::startStep( CmdSeqExecution *exec )
 
     printf( "CmdStepExecuteCANRR::startStep - begin\n" );
 
+    std::string tgtAxis;
+
+    // Lookup the tgtAxis parameter
+    if( exec->getCmdParams()->lookup( "tgtAxis", tgtAxis ) != CS_RESULT_SUCCESS )
+    {
+        printf( "ERROR: Start Step couldn't find required 'tgtAxis' parameter.\n" );
+        exec->setStepState( CS_STEPSTATE_ERROR );
+        return CS_STEPACTION_ERROR;
+    }
+
     // Lookup the target device
-    if( exec->getHardwareIntf()->lookupCANDevice( "XAxis", CNCACOMP_FUNC_DRIVER, &device ) != CS_RESULT_SUCCESS )
+    if( exec->getHardwareIntf()->lookupCANDevice( tgtAxis, CNCACOMP_FUNC_DRIVER, &device ) != CS_RESULT_SUCCESS )
     {
         exec->setStepState( CS_STEPSTATE_ERROR );
         return CS_STEPACTION_ERROR;

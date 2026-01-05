@@ -10,6 +10,8 @@ namespace pdy = Poco::Dynamic;
 HNCNCAction::HNCNCAction()
 {
     m_type = HNCNC_ATYPE_NOTSET;
+
+    m_seqParameters = NULL;
 }
 
 HNCNCAction::~HNCNCAction()
@@ -53,14 +55,25 @@ HNCNCAction::getSeqDefID()
     return m_seqDefID;
 }
 
-bool
-HNCNCAction::decodeStartCapture( std::istream& bodyStream )
+CmdSeqParameters* 
+HNCNCAction::getSeqParameters()
 {
-#if 0
-    HNIrrigationZone zone;
+    return m_seqParameters;
+}
 
-    // Clear the update mask
-    m_zoneUpdateMask = HNID_ZU_FLDMASK_CLEAR;
+void
+HNCNCAction::addSeqParam( std::string name, std::string value )
+{
+    std::cout << "addSeqParam - name: " << name << "  value: " << value << std::endl;
+
+    if( m_seqParameters )
+        m_seqParameters->setValue( name, value );
+}
+
+bool
+HNCNCAction::decodeEnqueueSequence( std::istream& bodyStream )
+{
+    m_seqParameters = new CmdSeqParameters;
 
     // Parse the json body of the request
     try
@@ -72,74 +85,31 @@ HNCNCAction::decodeStartCapture( std::istream& bodyStream )
         // Get a pointer to the root object
         pjs::Object::Ptr jsRoot = varRoot.extract< pjs::Object::Ptr >();
 
-        if( jsRoot->has( "name" ) )
+        if( jsRoot->has( "parameters" ) )
         {
-            zone.setName( jsRoot->getValue<std::string>( "name" ) );
-            m_zoneUpdateMask |= HNID_ZU_FLDMASK_NAME;
-        }
+            pjs::Array::Ptr jsParamList = jsRoot->getArray( "parameters" );
 
-        if( jsRoot->has( "description" ) )
-        {
-            zone.setDesc( jsRoot->getValue<std::string>( "description" ) );
-            m_zoneUpdateMask |= HNID_ZU_FLDMASK_DESC;
-        }
-
-        if( jsRoot->has( "secondsPerWeek" ) )
-        {
-            zone.setWeeklySeconds( jsRoot->getValue<uint>( "secondsPerWeek" ) );
-            m_zoneUpdateMask |= HNID_ZU_FLDMASK_SPW;
-        }
-
-        if( jsRoot->has( "secondsMaxCycle" ) )
-        {
-            zone.setMaximumCycleTimeSeconds( jsRoot->getValue<uint>( "secondsMaxCycle" ) );
-            m_zoneUpdateMask |= HNID_ZU_FLDMASK_MAXSPC;
-        }
-
-        if( jsRoot->has( "secondsMinCycle" ) )
-        {
-            zone.setMinimumCycleTimeSeconds( jsRoot->getValue<uint>( "secondsMinCycle" ) );
-            m_zoneUpdateMask |= HNID_ZU_FLDMASK_MINSPC;
-        }
-
-        if( jsRoot->has( "swidList" ) )
-        {
-            pjs::Array::Ptr jsSWIDList = jsRoot->getArray( "swidList" );
-
-            zone.clearSWIDSet();
-            
-            std::cout << "Zone Update - start" << std::endl;
-
-            for( uint index = 0; index < jsSWIDList->size(); index++ )
+            for( uint index = 0; index < jsParamList->size(); index++ )
             {
-                std::string value = jsSWIDList->getElement<std::string>(index);
-                std::cout << "Zone Update - value: " << value << std::endl;
-                zone.addSWID( value );
+                pjs::Object::Ptr nvObj = jsParamList->getObject(index);
+
+                std::string name = nvObj->getValue<std::string>( "name" );
+                std::string value = nvObj->getValue<std::string>( "value" );
+
+                addSeqParam( name, value );
             }
-            
-            m_zoneUpdateMask |= HNID_ZU_FLDMASK_SWLST;
         }
-        
-        if( zone.validateSettings() != HNIS_RESULT_SUCCESS )
-        {
-            std::cout << "updateZone validate failed" << std::endl;
-            // zoneid parameter is required
-            return true;
-        }        
+
     }
     catch( Poco::Exception ex )
     {
-        std::cout << "updateZone exception: " << ex.displayText() << std::endl;
+        std::cout << "decodeEnqueueSequence exception: " << ex.displayText() << std::endl;
         // Request body was not understood
         return true;
     }
 
-    // Add the zone info to the list
-    m_zoneList.push_back( zone );
-#endif
     // Done
     return false;
-
 }
 
 void

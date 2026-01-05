@@ -506,6 +506,13 @@ HNCNCDevice::startAction()
         break;
 
         case HNCNC_ATYPE_ENQUEUE_SEQUENCE:
+            if( m_curMachine )
+            {
+              CNCM_RESULT_T result = m_curMachine->startSequence( m_curUserAction->getSeqDefID(), m_curUserAction->getSeqParameters() );
+            }
+
+            // Done with this request
+            actBits = HNID_ACTBIT_COMPLETE;
         break;
 
         case HNCNC_ATYPE_GET_ACTIVE_SEQUENCES:
@@ -600,6 +607,22 @@ HNCNCDevice::dispatchEP( HNodeDevice *parent, HNOperationData *opData )
     // POST "/hnode2/cnc/sequencedef/{seqid}"
     else if( "enqueueSequence" == opID )
     {
+      std::string seqID;
+
+        if( opData->getParam( "seqid", seqID ) == true )
+        {
+            opData->responseSetStatusAndReason( HNR_HTTP_INTERNAL_SERVER_ERROR );
+            opData->responseSend();
+            return; 
+        }
+
+        std::cout << "=== Get Seq Enqueue Request (id: " << seqID << ") ===" << std::endl;
+
+        action.setSeqDefID( seqID );
+
+        std::istream& bodyStream = opData->requestBody();
+        action.decodeEnqueueSequence( bodyStream );
+        
         action.setType( HNCNC_ATYPE_ENQUEUE_SEQUENCE );
     }
     // GET "/hnode2/cnc/sequence"
