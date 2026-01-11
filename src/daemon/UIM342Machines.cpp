@@ -26,9 +26,9 @@ UIM342Motor::populateAxisComponentSpecificJson( void *obj )
     compObj->set( "canGroupID", CANGroupID );
 }
 
-UIM342SingleAxisMachine::UIM342SingleAxisMachine()
+UIM342SingleAxisMachine::UIM342SingleAxisMachine( CNCEventLoop *evLoop ) : CNCMachine( evLoop )
 {
-
+    
 }
 
 UIM342SingleAxisMachine::~UIM342SingleAxisMachine()

@@ -79,7 +79,7 @@ class CNCSequencer : public CNCEventCB, CmdSequenceEventCallback, CANDeviceEvent
 class CNCMachine : public CSHardwareInterface, public  CNCSequencerCallbacks
 {
     public:
-        CNCMachine();
+        CNCMachine( CNCEventLoop *evLoop );
        ~CNCMachine();
 
         void addEventObserver( CNCMachineEventsCB *obsPtr );
@@ -135,7 +135,7 @@ class CNCMachine : public CSHardwareInterface, public  CNCSequencerCallbacks
 
         void notifySequenceComplete();
 
-        CNCEventLoop m_eventLoop;
+        CNCEventLoop *m_eventLoop;
 
         CNCSequencer m_sequencer;
 

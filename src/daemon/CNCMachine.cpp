@@ -36,7 +36,7 @@ CNCSequencer::registerWithEventLoop( CNCEventLoop *loop )
 {
     m_pendingFD = loop->createEventFD( this );
 
-    printf( "CNCSequencer::registerWithEventLoop - %d\n", m_pendingFD );
+    printf( "CNCSequencer::registerWithEventLoop - %d\n", m_pendingFD->getFD() );
 
     return CNCM_RESULT_SUCCESS;
 }
@@ -248,8 +248,10 @@ CNCSequencer::processFrame( CANFrame *frame )
         m_curSeq->processFrame( m_curSeqExec, frame );
 }
 
-CNCMachine::CNCMachine()
+CNCMachine::CNCMachine( CNCEventLoop *evLoop )
 {
+    m_eventLoop = evLoop;
+
     m_sequencer.registerCallback( this );
 }
 
@@ -289,19 +291,17 @@ CNCMachine::getAxis( std::string axisID, CNCAxis **axisPtr )
 CNCM_RESULT_T
 CNCMachine::prepareBeforeRun( CmdSeqParameters *params )
 {
-    // Init the event loop
-    m_eventLoop.init();
 
     // Tell the sequence where to lookup hardware
     m_sequencer.setHardwareIntf( this );
 
     // Have the sequencer add itself
-    m_sequencer.registerWithEventLoop( &m_eventLoop );
+    m_sequencer.registerWithEventLoop( m_eventLoop );
 
     // Let all subcomponents hook to event loop
     for( std::map< std::string, CNCAxis* >::iterator it = m_axes.begin(); it != m_axes.end(); it++ )
     {
-        it->second->registerWithEventLoop( &m_eventLoop );
+        it->second->registerWithEventLoop( m_eventLoop );
     }
 
     return CNCM_RESULT_SUCCESS;
@@ -311,7 +311,7 @@ CNCM_RESULT_T
 CNCMachine::start( CmdSeqParameters *params )
 {
     // Start running.
-    m_eventLoop.run();
+    //m_eventLoop.run();
 
     return CNCM_RESULT_SUCCESS;
 }
@@ -319,7 +319,7 @@ CNCMachine::start( CmdSeqParameters *params )
 void
 CNCMachine::stop()
 {
-    m_eventLoop.signalQuit();
+    //m_eventLoop->signalQuit();
 }
 
 std::string

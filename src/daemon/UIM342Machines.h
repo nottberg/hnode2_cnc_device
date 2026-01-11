@@ -23,7 +23,7 @@ class UIM342Motor : public CANDevice
 class UIM342SingleAxisMachine : public CNCMachine
 {
     public:
-        UIM342SingleAxisMachine();
+        UIM342SingleAxisMachine( CNCEventLoop *evLoop );
        ~UIM342SingleAxisMachine();
 
         virtual CNCM_RESULT_T setup();

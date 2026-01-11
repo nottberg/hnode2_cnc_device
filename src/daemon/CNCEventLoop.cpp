@@ -76,10 +76,17 @@ CNCEventLoop::~CNCEventLoop()
 
 CNCEVLP_RESULT_T
 CNCEventLoop::init()
-{
-    m_quitTrigger.setup();
+{ 
+    printf( "CNCEventLoop - init - 1\n" );
 
     m_eventLoop.setup( this );
+
+    printf( "CNCEventLoop - init - 2\n" );
+
+    m_quitTrigger.setup();
+    m_eventLoop.addFDToEPoll( m_quitTrigger.getFD() );
+
+    printf( "CNCEventLoop - init - 3\n" );
 
     return CNCEVLP_RESULT_SUCCESS;
 }
@@ -102,7 +109,17 @@ CNCEventLoop::createEventFD( CNCEventCB *callback )
 
     newEvt->init( callback );
 
+    printf( "addFDToEPoll - createEventFD: %d\n", newEvt->getFD() );
+
+    if( m_eventLoop.addFDToEPoll( newEvt->getFD() ) != HNEP_RESULT_SUCCESS )
+    {
+        delete newEvt;
+        return NULL;
+    }
+
     m_evtList.insert( std::pair< int, CNCEventFD* >( newEvt->getFD(), newEvt ) );
+
+    printf( "createEventFD - fd: %d\n", newEvt->getFD() );
 
     return newEvt;
 }
@@ -134,6 +151,8 @@ CNCEventLoop::timeoutEvent()
 void
 CNCEventLoop::fdEvent( int sfd )
 {
+    printf( "CNCEventLoop - fdEvent: %d\n", sfd );
+
     if( sfd == m_quitTrigger.getFD() )
     {
         clearQuit();
@@ -161,14 +180,16 @@ CNCEventLoop::fdEvent( int sfd )
 void
 CNCEventLoop::fdError( int sfd )
 {
+    printf( "CNCEventLoop - fdError: %d\n", sfd );
 
 }
 
 CNCEVLP_RESULT_T
 CNCEventLoop::run()
 {
+    printf( "CNCEventLoop - running\n" );
     m_eventLoop.run();
-
+    printf( "CNCEventLoop - exit\n" );
 /*
     struct epoll_event events[MAX_EVENTS];
     uint nfds = 0;

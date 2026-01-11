@@ -131,7 +131,7 @@ HNCNCDevice::main( const std::vector<std::string>& args )
     // Start up the hnode device
     m_hnodeDev.start();
 
-    m_curMachine = new UIM342SingleAxisMachine;
+    m_curMachine = new UIM342SingleAxisMachine( &m_eventLoop );
     
     m_curMachine->setup();
     m_curMachine->addEventObserver( this );
