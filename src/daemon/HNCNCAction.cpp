@@ -87,23 +87,25 @@ HNCNCAction::decodeEnqueueSequence( std::istream& bodyStream )
 
         if( jsRoot->has( "parameters" ) )
         {
-            pjs::Array::Ptr jsParamList = jsRoot->getArray( "parameters" );
+            pjs::Object::Ptr jsParams = jsRoot->getObject( "parameters" );
 
-            for( uint index = 0; index < jsParamList->size(); index++ )
+            for( Poco::JSON::Object::ConstIterator it = jsParams->begin(); it != jsParams->end(); ++it )
             {
-                pjs::Object::Ptr nvObj = jsParamList->getObject(index);
-
-                std::string name = nvObj->getValue<std::string>( "name" );
-                std::string value = nvObj->getValue<std::string>( "value" );
-
-                addSeqParam( name, value );
+                std::string key = it->first;
+                Poco::Dynamic::Var value = it->second;
+       
+                // Make sure the value is a string and if so save the parameter
+                if( value.isString() )
+                {
+                    addSeqParam( key, value.toString() );
+                }
             }
         }
 
     }
     catch( Poco::Exception ex )
     {
-        std::cout << "decodeEnqueueSequence exception: " << ex.displayText() << std::endl;
+        std::cout << "decodeEnqueueSequence exception: " << ex.message() << std::endl;
         // Request body was not understood
         return true;
     }

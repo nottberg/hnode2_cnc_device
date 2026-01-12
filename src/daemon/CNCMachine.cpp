@@ -12,6 +12,9 @@ namespace pdy = Poco::Dynamic;
 CNCSequencer::CNCSequencer()
 {
     m_hwIntf = NULL;
+
+    m_curSeq = NULL;
+    m_curSeqExec = NULL;    
 }
 
 CNCSequencer::~CNCSequencer()
